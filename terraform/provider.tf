@@ -4,6 +4,7 @@ terraform {
     azurerm                    = "~> 2.33"
     random                     = "~> 3.0.0"
   }
+  required_version             = "~> 0.13.5"
 }
 
 provider "aws" {

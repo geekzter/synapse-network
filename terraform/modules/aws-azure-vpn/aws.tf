@@ -1,7 +1,7 @@
 resource aws_vpc vpc {
   cidr_block                   = "192.168.0.0/16"
 
-  tags                         = local.tags
+  tags                         = data.azurerm_resource_group.vpn.tags
 }
 
 # The subnet where the Virtual Machine will live
@@ -114,13 +114,6 @@ resource aws_security_group ssh {
   tags                         = aws_vpc.vpc.tags
 }
 
-resource aws_key_pair ssh_key {
-  key_name                     = "ssh_key"
-  public_key                   = file(var.ssh_public_key)
-
-  tags                         = aws_vpc.vpc.tags
-}
-
 resource aws_instance vm {
   ami                          = "ami-0701e7be9b2a77600"
   instance_type                = "t2.micro"
@@ -129,7 +122,7 @@ resource aws_instance vm {
   subnet_id                    = aws_subnet.subnet_1.id
   associate_public_ip_address  = true
 
-  key_name                     = aws_key_pair.ssh_key.key_name
+  key_name                     = var.aws_key_name
 
   tags                         = aws_vpc.vpc.tags
 }
