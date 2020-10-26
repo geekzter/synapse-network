@@ -5,7 +5,7 @@ data aws_vpc vpc {
 data aws_ami windows_2019 {
   most_recent                  = true
   filter {
-    name                       = "name" #id = "ami-0399e1fa4369454f8"
+    name                       = "name"
     values                     = ["Windows_Server-2019-English-Full-Base-*"]
   }
   owners                       = ["amazon"]
@@ -50,6 +50,10 @@ resource aws_instance windows_vm {
   get_password_data            = true
   key_name                     = var.aws_key_name
   user_data_base64             = base64encode(local.user_data)
+
+  root_block_device {
+    volume_size                = 100
+  }
 
   tags                         = data.aws_vpc.vpc.tags
 }

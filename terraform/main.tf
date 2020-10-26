@@ -69,13 +69,14 @@ module synapse_client {
   # user_password                = local.password
   vpc_id                       = var.deploy_network ? module.aws_azure_vpn[0].aws_vpc_id : null
 
-  count                        = var.deploy_synapse_client ? 1 : 0
+  count                        = var.deploy_network && var.deploy_synapse_client ? 1 : 0
 }
 
 module synapse {
   source                       = "./modules/synapse"
   region                       = var.azure_region
   resource_group_name          = azurerm_resource_group.vpn.name
+  dwu                          = var.azure_sql_dwh_dwu
   user_name                    = var.user_name
   user_password                = local.password
   create_network_resources     = var.deploy_network

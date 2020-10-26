@@ -1,29 +1,31 @@
-output aws_linux_vm_public_ip {
-  value        = var.deploy_network ? module.aws_azure_vpn[0].aws_linux_vm_public_ip : null
+output aws_linux_vm_public_ip_address {
+  value        = var.deploy_network ? module.aws_azure_vpn[0].aws_linux_vm_public_ip_address : null
 }
 
-output aws_linux_vm_private_ip {
-  value        = var.deploy_network ? module.aws_azure_vpn[0].aws_linux_vm_private_ip : null
+output aws_linux_vm_private_ip_address {
+  value        = var.deploy_network ? module.aws_azure_vpn[0].aws_linux_vm_private_ip_address : null
 }
 
 output aws_windows_vm_encrypted_password {
-  value        = var.deploy_synapse_client ? module.synapse_client[0].vm_encrypted_password : null
+  sensitive    = true
+  value        = var.deploy_network && var.deploy_synapse_client ? module.synapse_client[0].vm_encrypted_password : null
+}
+
+output aws_windows_vm_password {
+  sensitive    = true
+  value        = var.deploy_network && var.deploy_synapse_client && fileexists(var.ssh_private_key) ? rsadecrypt(module.synapse_client[0].vm_encrypted_password,file(var.ssh_private_key)) : null
 }
 
 output aws_windows_vm_public_ip_address {
-  value        = var.deploy_synapse_client ? module.synapse_client[0].vm_public_ip_address : null
+  value        = var.deploy_network && var.deploy_synapse_client ? module.synapse_client[0].vm_public_ip_address : null
 }
 
-output aws_windows_vm_user_data {
-  value        = var.deploy_synapse_client ? module.synapse_client[0].vm_user_data : null
+output azure_linux_vm_public_ip_address {
+  value        = var.deploy_network ? module.aws_azure_vpn[0].azure_linux_vm_public_ip_address : null
 }
 
-output azure_linux_vm_public_ip {
-  value        = var.deploy_network ? module.aws_azure_vpn[0].azure_linux_vm_public_ip : null
-}
-
-output azure_linux_vm_private_ip {
-  value        = var.deploy_network ? module.aws_azure_vpn[0].azure_linux_vm_private_ip : null
+output azure_linux_vm_private_ip_address {
+  value        = var.deploy_network ? module.aws_azure_vpn[0].azure_linux_vm_private_ip_address : null
 }
 
 output azure_resource_group_id {

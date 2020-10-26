@@ -5,7 +5,7 @@ variable create_network_resources {
 
 variable dwu {
   type         = string
-  default      = "DW1000c"
+  default      = "DW100c"
 }
 
 variable region {
