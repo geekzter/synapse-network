@@ -1,10 +1,11 @@
 # AWS-Azure Site-to-Site VPN with Synapse Analytics
 
 This repo can be used to demonstrate performance of connectivity between AWS & Azure regions. The workload used in this demo is Synapse Analytics (formerly SQL Data Warehouse)  populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
-
-
 For connectivity Site-to-Site VPN ([aws-azure-vpn](/terraform/modules/aws-azure-vpn) module) is used, which implements the AWS - Azure S2S VPN described in this [excellent blog post](https://deployeveryday.com/2020/04/13/vpn-aws-azure-terraform.html) by [Jonatas Baldin](https://deployeveryday.com/about.html).
 
+<br/>
+
+![alt text](diagram.png "Infrastructure")
 
 ## Pre-requisites
 - To get started you need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS, [Homebrew](https://github.com/hashicorp/homebrew-tap) on macOS or [chocolatey](https://chocolatey.org/packages/terraform) on Windows)
@@ -62,6 +63,7 @@ To populate Synapse Analytics, run this script:
 ```
 ./scripts/load_data.ps1
 ```
+If the script fails, you can run it multiple times - it will only load tables not populated yet.
 Alternatively, follow the manual steps [documented here](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
 
 Now you can log on the the AWS VM. The username is `Administrator`. Use configuration data from Terraform to get the password and public IP address:
@@ -79,7 +81,7 @@ The VM should already have SQL Server Management Studio installed, and the hosts
 ```
 select top 100000000 * from dbo.Trip
 ```
-In my experience this query for 100M rows completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam).   
+This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam). Using the public endpoint instead of S2S VPN and private endpoint yields the same results.  
 
 ![alt text](100m.png "SQL Server Management Studio")
 
