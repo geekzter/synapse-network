@@ -41,14 +41,14 @@ function ImportDatabase (
     az sql server firewall-rule create -g $ResourceGroup -s $SqlServer -n "ImportQuery $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress -o none
 
     # Check whether we need to import
-    $schemaExists = Execute-Sql -QueryFile $sqlQueryFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $Password
+    # $schemaExists = Execute-Sql -QueryFile $sqlQueryFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $Password
 
-    if ($schemaExists -eq 0) {
-        Write-Host "Database ${SqlServer}/${SqlDatabaseName} is empty, loading data..."
+    # if ($schemaExists -eq 0) {
+        Write-Host "Database ${SqlServer}/${SqlDatabaseName}: loading data..."
         Execute-Sql -QueryFile $sqlLoadFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $UserName -SecurePassword $Password
-      } else {
-        Write-Host "Database ${SqlServer}/${SqlDatabaseName} is not empty, skipping data load"
-    }
+    #   } else {
+    #     Write-Host "Database ${SqlServer}/${SqlDatabaseName} is not empty, skipping data load"
+    # }
 
     # Reset Public Network Access to what it was before
     az sql server update -n $SqlServer -g $ResourceGroup --set publicNetworkAccess="$sqlPublicNetworkAccess" -o none

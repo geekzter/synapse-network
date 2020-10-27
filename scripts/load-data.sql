@@ -4,10 +4,10 @@
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
--- Create Schema
+-- Create Schema ------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------------
 IF NOT(EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
-           WHERE TABLE_NAME = N'Trip'))
+           WHERE TABLE_NAME = N'Date'))
 BEGIN
   CREATE TABLE [dbo].[Date]
   (
@@ -49,7 +49,11 @@ BEGIN
       DISTRIBUTION = ROUND_ROBIN,
       CLUSTERED COLUMNSTORE INDEX
   );
+END
 
+IF NOT(EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
+           WHERE TABLE_NAME = N'Geography'))
+BEGIN
   CREATE TABLE [dbo].[Geography]
   (
       [GeographyID] int NOT NULL,
@@ -65,7 +69,11 @@ BEGIN
       DISTRIBUTION = ROUND_ROBIN,
       CLUSTERED COLUMNSTORE INDEX
   );
+END
 
+IF NOT(EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
+           WHERE TABLE_NAME = N'HackneyLicense'))
+BEGIN
   CREATE TABLE [dbo].[HackneyLicense]
   (
       [HackneyLicenseID] int NOT NULL,
@@ -77,7 +85,11 @@ BEGIN
       DISTRIBUTION = ROUND_ROBIN,
       CLUSTERED COLUMNSTORE INDEX
   );
+END
 
+IF NOT(EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
+           WHERE TABLE_NAME = N'Medallion'))
+BEGIN
   CREATE TABLE [dbo].[Medallion]
   (
       [MedallionID] int NOT NULL,
@@ -89,7 +101,11 @@ BEGIN
       DISTRIBUTION = ROUND_ROBIN,
       CLUSTERED COLUMNSTORE INDEX
   );
+END
 
+IF NOT(EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
+           WHERE TABLE_NAME = N'Time'))
+BEGIN
   CREATE TABLE [dbo].[Time]
   (
       [TimeID] int NOT NULL,
@@ -107,7 +123,11 @@ BEGIN
       DISTRIBUTION = ROUND_ROBIN,
       CLUSTERED COLUMNSTORE INDEX
   );
+END
 
+IF NOT(EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
+           WHERE TABLE_NAME = N'Trip'))
+BEGIN
   CREATE TABLE [dbo].[Trip]
   (
       [DateID] int NOT NULL,
@@ -139,7 +159,11 @@ BEGIN
       DISTRIBUTION = ROUND_ROBIN,
       CLUSTERED COLUMNSTORE INDEX
   );
+END
 
+IF NOT(EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES
+           WHERE TABLE_NAME = N'Weather'))
+BEGIN
   CREATE TABLE [dbo].[Weather]
   (
       [DateID] int NOT NULL,
@@ -155,7 +179,7 @@ BEGIN
 END
 
 -----------------------------------------------------------------------------------------------------------------------------------
--- Load Data
+-- Load Data ----------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------------
 IF NOT(EXISTS (SELECT TOP 1 * FROM dbo.Date))
 	BEGIN

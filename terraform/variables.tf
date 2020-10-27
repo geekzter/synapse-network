@@ -8,6 +8,11 @@ variable azure_region {
   default      = "westeurope" # Amsterdam
 }
 
+variable azure_sql_dwh_dwu {
+  type         = string
+  default      = "DW100c"
+}
+
 variable deploy_network {
   type         = bool
   default      = true
@@ -21,6 +26,12 @@ variable deploy_synapse_client {
 variable deploy_synapse {
   type         = bool
   default      = true
+}
+
+# Used to decrypt EC2 passwords
+variable ssh_private_key {
+  type         = string
+  default      = "~/.ssh/id_rsa"
 }
 
 variable ssh_public_key {
