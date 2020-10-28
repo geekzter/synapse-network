@@ -16,6 +16,12 @@ variable ssh_public_key {
   default      = "~/.ssh/id_rsa.pub"
 }
 
+# Used to decrypt EC2 passwords
+variable ssh_private_key {
+  type         = string
+  default      = "~/.ssh/id_rsa"
+}
+
 variable suffix {
   type         = string
   default      = "dflt"
