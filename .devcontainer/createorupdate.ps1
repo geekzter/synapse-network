@@ -28,6 +28,7 @@ Push-Location $terraformDirectory
 # Get the desired version of Terraform
 tfenv install latest
 tfenv install min-required
+tfenv use min-required
 # We may as well initialize Terraform now
 terraform init -upgrade
 Pop-Location
@@ -49,5 +50,6 @@ if (!(Test-Path $Profile)) {
 
 # Create SSH keypair
 if (!(Test-Path ~/.ssh/id_rsa)) {
-    ssh-keygen -q -m PEM -N [string]::empty -f ~/.ssh/id_rsa
+    # pwsh doesn't let me create an empty passphrase
+    bash -c "ssh-keygen -q -m PEM -N '' -f ~/.ssh/id_rsa"
 }
