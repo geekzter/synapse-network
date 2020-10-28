@@ -38,6 +38,8 @@ if (!(Test-Path ~/bootstrap-os)) {
     git clone https://github.com/geekzter/bootstrap-os.git ~/bootstrap-os
 } else {
     git -C ~/bootstrap-os pull
+    # This has been run before, upgrade packages
+    sudo apt-get upgrade -y
 }
 . ~/bootstrap-os/common/common_setup.ps1 -NoPackages
 . ~/bootstrap-os/common/functions/functions.ps1
