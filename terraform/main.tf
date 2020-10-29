@@ -53,6 +53,7 @@ module aws_azure_vpn {
   azure_resource_group_name    = azurerm_resource_group.vpn.name
   user_name                    = var.user_name
   user_password                = local.password
+  ssh_private_key              = var.ssh_private_key
   ssh_public_key               = var.ssh_public_key
 
   count                        = var.deploy_network ? 1 : 0
