@@ -16,3 +16,4 @@ $env:PATH = $pathList -Join ":"
 $env:SHELL = (Get-Command pwsh).Source
 
 Set-Location $repoDirectory
+Write-Host "To update Codespace configuration, run $repoDirectory/.devcontainer/createorupdate.ps1"
