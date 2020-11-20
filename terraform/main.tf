@@ -62,8 +62,8 @@ module aws_azure_vpn {
 module synapse_client {
   source                       = "./modules/aws-client"
   aws_key_name                 = aws_key_pair.pem_key.key_name
-  sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : null
-  sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : null
+  sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
+  sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   subnet_id                    = var.deploy_network ? module.aws_azure_vpn[0].aws_subnet_id : null
   suffix                       = local.suffix
   # user_name                    = var.user_name
