@@ -1,6 +1,6 @@
 # AWS-Azure Site-to-Site VPN with Synapse Analytics
 
-This repo can be used to demonstrate performance of connectivity between AWS & Azure regions. The workload used in this demo is Synapse Analytics (formerly SQL Data Warehouse)  populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
+This repo can be used to demonstrate performance of connectivity between AWS & Azure regions. The workload used in this demo is Synapse Analytics (formerly known as SQL Data Warehouse)  populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
 For connectivity Site-to-Site VPN ([aws-azure-vpn](/terraform/modules/aws-azure-vpn) module) is used, which implements the AWS - Azure S2S VPN described in this [excellent blog post](https://deployeveryday.com/2020/04/13/vpn-aws-azure-terraform.html) by [Jonatas Baldin](https://deployeveryday.com/about.html).
 
 <br/>
@@ -12,7 +12,7 @@ For connectivity Site-to-Site VPN ([aws-azure-vpn](/terraform/modules/aws-azure-
 - A SSH public key (default location is ~/.ssh/id_rsa.pub). This key is also used to create secrets for EC2 instances, [which requires](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-key-pairs.html) the private key to be in PEM format
 - There are some scripts to make life easier, you'll need [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) to execute those    
 
-If you create a GitHub Codespace for this repository, you'll get the above set up - including a generated SSH key pair.
+If you create a GitHub [Codespace](https://github.com/features/codespaces) for this repository, you'll get the above set up - including a generated SSH key pair.
 
 ### AWS
 You need an AWS account. There are [multiple ways](https://registry.terraform.io/providers/hashicorp/aws/latest/docs) to configure the AWS Terraform provider, I tested with static credentials:
@@ -71,17 +71,17 @@ Now you can log on the the AWS VM. The username is `Administrator`. Use configur
 terraform output aws_windows_vm_password
 terraform output aws_windows_vm_public_ip_address
 ```
+You can also use the generated client.rdp file.   
 Connect to Synapse Analytics using SQL Server Management Studio. The Synapse Analytics password and FQDN can be fetched using:
 ```
 terraform output user_password
 terraform output azure_sql_dwh_fqdn
 ```
 The VM should already have SQL Server Management Studio installed, and the hosts file edited with a line to resolve Synapse Analytics to the Private Endpoint in the Azure Virtual Network. Within SQL Server Management Studio, run a query e.g.
-
 ```
 select top 100000000 * from dbo.Trip
 ```
-This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam). Using the public endpoint instead of S2S VPN and private endpoint yields the same results.  
+This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam). Using the public endpoint instead of S2S VPN and private endpoint yields the same results, both paths are taking a direct route.  
 
 ![alt text](100m.png "SQL Server Management Studio")
 
