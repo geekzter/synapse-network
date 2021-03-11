@@ -41,5 +41,5 @@ variable ssh_public_key {
 
 variable user_name {
   type         = string
-  default      = "vpnadmin"
+  default      = "demoadmin"
 }

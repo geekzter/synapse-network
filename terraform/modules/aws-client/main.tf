@@ -36,6 +36,8 @@ locals {
     {
       sql_dwh_private_ip_address= var.sql_dwh_private_ip_address
       sql_dwh_fqdn             = var.sql_dwh_fqdn
+      sql_dwh_pool             = var.sql_dwh_pool
+      user_name                = var.user_name
     })
 }
 
@@ -56,4 +58,12 @@ resource aws_instance windows_vm {
   }
 
   tags                         = data.aws_vpc.vpc.tags
+}
+
+resource local_file rdp_file {
+  content                      = templatefile("${path.module}/rdp.tpl",
+  {
+    host                       = aws_instance.windows_vm.public_ip
+  })
+  filename                     = "${path.root}/../client.rdp"
 }

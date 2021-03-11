@@ -64,10 +64,10 @@ module synapse_client {
   aws_key_name                 = aws_key_pair.pem_key.key_name
   sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
+  sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
   subnet_id                    = var.deploy_network ? module.aws_azure_vpn[0].aws_subnet_id : null
   suffix                       = local.suffix
-  # user_name                    = var.user_name
-  # user_password                = local.password
+  user_name                    = var.user_name
   vpc_id                       = var.deploy_network ? module.aws_azure_vpn[0].aws_vpc_id : null
 
   count                        = var.deploy_network && var.deploy_synapse_client ? 1 : 0
