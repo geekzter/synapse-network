@@ -6,12 +6,7 @@
 #> 
 #Requires -Version 7
 
-### Arguments
-param ( 
-    [parameter(Mandatory=$false)][string]$tfdirectory=$(Join-Path (Get-Item (Split-Path -parent -Path $MyInvocation.MyCommand.Path)).Parent.FullName "terraform")
-) 
-
-. (Join-Path (Split-Path $MyInvocation.MyCommand.Path -Parent) functions.ps1)
+. (Join-Path $PSScriptRoot functions.ps1)
 
 function ImportDatabase (
     [parameter(Mandatory=$true)][string]$SqlDatabaseName,
@@ -69,6 +64,7 @@ function ImportDatabase (
 
 # Gather data from Terraform
 try {
+    $tfdirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "terraform")
     Push-Location $tfdirectory
     
     Invoke-Command -ScriptBlock {
