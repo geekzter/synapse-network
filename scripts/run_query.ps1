@@ -32,7 +32,7 @@ function Execute-SqlCmd (
     Invoke-Expression "${sqlRunCommand} -P ${sqlPassword}"
     $stopwatch.Stop()
     $stopWatch | Out-File $OutputFile -Append
-    Write-Host "Query time: $($stopwatch.Elapsed.ToString())"
+    Write-Host "Retrieved ${Rows} rows in $($stopwatch.Elapsed.ToString())"
     Write-Host "Query output and statistics written to ${OutputFile}"
 }
 
