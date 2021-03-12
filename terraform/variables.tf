@@ -18,7 +18,17 @@ variable deploy_network {
   default      = true
 }
 
+variable deploy_s2s_vpn {
+  type         = bool
+  default      = false
+}
+
 variable deploy_aws_client {
+  type         = bool
+  default      = false
+}
+
+variable deploy_azure_client {
   type         = bool
   default      = true
 }

@@ -21,7 +21,3 @@ output azure_linux_vm_public_ip_address {
 output azure_linux_vm_private_ip_address {
   value        = azurerm_linux_virtual_machine.vm.private_ip_address
 }
-
-output azure_subnet_id {
-  value        = azurerm_subnet.subnet_1.id
-}

@@ -2,28 +2,16 @@ data azurerm_resource_group vpn {
   name                         = var.azure_resource_group_name
 }
 
-resource azurerm_virtual_network vnet {
-  name                         = "${data.azurerm_resource_group.vpn.name}-network"
-  location                     = data.azurerm_resource_group.vpn.location
-  resource_group_name          = data.azurerm_resource_group.vpn.name
-  address_space                = ["10.0.0.0/16"]
-
-  tags                         = data.azurerm_resource_group.vpn.tags
-}
-
-resource azurerm_subnet subnet_1 {
-  name                         = "subnet_1"
-  resource_group_name          = data.azurerm_resource_group.vpn.name
-  virtual_network_name         = azurerm_virtual_network.vnet.name
-  address_prefixes             = ["10.0.1.0/24"]
-  enforce_private_link_endpoint_network_policies = true
+data azurerm_virtual_network vnet {
+  name                         = var.azure_virtual_network_name
+  resource_group_name          = var.azure_resource_group_name
 }
 
 # The subnet where the VPN tunnel will live
 resource azurerm_subnet subnet_gateway {
   name                         = "GatewaySubnet"
   resource_group_name          = data.azurerm_resource_group.vpn.name
-  virtual_network_name         = azurerm_virtual_network.vnet.name
+  virtual_network_name         = var.azure_virtual_network_name
   address_prefixes             = ["10.0.2.0/24"]
 }
 
@@ -219,7 +207,7 @@ resource azurerm_network_interface network_interface_vm {
 
   ip_configuration {
     name                       = "internal"
-    subnet_id                  = azurerm_subnet.subnet_1.id
+    subnet_id                  = var.azure_vm_subnet_id
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id       = azurerm_public_ip.public_ip_vm.id
   }

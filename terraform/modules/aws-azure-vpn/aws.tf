@@ -78,19 +78,19 @@ resource aws_vpn_connection vpn_connection_2 {
 }
 
 resource aws_vpn_connection_route vpn_connection_route_1 {
-  destination_cidr_block       = azurerm_virtual_network.vnet.address_space[0]
+  destination_cidr_block       = data.azurerm_virtual_network.vnet.address_space[0]
   vpn_connection_id            = aws_vpn_connection.vpn_connection_1.id
 }
 
 resource aws_vpn_connection_route vpn_connection_route_2 {
-  destination_cidr_block       = azurerm_virtual_network.vnet.address_space[0]
+  destination_cidr_block       = data.azurerm_virtual_network.vnet.address_space[0]
   vpn_connection_id            = aws_vpn_connection.vpn_connection_2.id
 }
 
 resource aws_route route_to_azure {
   route_table_id               = aws_route_table.route_table.id
 
-  destination_cidr_block       = azurerm_virtual_network.vnet.address_space[0]
+  destination_cidr_block       = data.azurerm_virtual_network.vnet.address_space[0]
   gateway_id                   = aws_vpn_gateway.vpn_gateway.id
 }
 

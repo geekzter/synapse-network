@@ -2,12 +2,15 @@ variable aws_key_name {
   type         = string
 }
 
-variable azure_region {
+variable azure_resource_group_name {
   type         = string
-  default      = "westeurope" # Amsterdam
 }
 
-variable azure_resource_group_name {
+variable azure_virtual_network_name {
+  type         = string
+}
+
+variable azure_vm_subnet_id {
   type         = string
 }
 
@@ -29,7 +32,6 @@ variable suffix {
 
 variable user_name {
   type         = string
-  default      = "vpnadmin"
 }
 
 variable user_password {

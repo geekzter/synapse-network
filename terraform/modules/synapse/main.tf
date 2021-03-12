@@ -1,4 +1,6 @@
 locals {
+  publicip                     = chomp(data.http.localpublicip.body)
+  publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   subnet_name                  = var.create_network_resources ? element(split("/",var.subnet_id),length(split("/",var.subnet_id))-1) : null
   virtual_network_id           = var.create_network_resources ? replace(var.subnet_id,"/subnets/${local.subnet_name}","") : null
   virtual_network_name         = var.create_network_resources ? element(split("/",local.virtual_network_id),length(split("/",local.virtual_network_id))-1) : null
@@ -7,6 +9,7 @@ locals {
 data azurerm_resource_group rg {
   name                         = var.resource_group_name
 }
+
 
 resource azurerm_sql_server sql_dwh {
   name                         = "${var.resource_group_name}-sqldwserver"
@@ -18,6 +21,48 @@ resource azurerm_sql_server sql_dwh {
 
   tags                         = data.azurerm_resource_group.rg.tags
 }
+
+data http localpublicip {
+# Get public IP address of the machine running this terraform template
+  url                          = "http://ipinfo.io/ip"
+# url                          = "https://ipapi.co/ip" 
+}
+data http localpublicprefix {
+# Get public IP prefix of the machine running this terraform template
+  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${local.publicip}"
+}
+resource azurerm_sql_firewall_rule terraform_client_ip {
+  name                         = "TerraformClientIpRule"
+  resource_group_name          = var.resource_group_name
+  server_name                  = azurerm_sql_server.sql_dwh.name
+  start_ip_address             = local.publicip
+  end_ip_address               = local.publicip
+}
+resource azurerm_sql_firewall_rule terraform_client_ip_prefix {
+  name                         = "TerraformClientIpPrefixRule"
+  resource_group_name          = var.resource_group_name
+  server_name                  = azurerm_sql_server.sql_dwh.name
+  start_ip_address             = cidrhost(local.publicprefix,0)
+  end_ip_address               = cidrhost(local.publicprefix,pow(2,32-split("/",local.publicprefix)[1])-1)
+}
+# resource azurerm_sql_firewall_rule client_prefixes {
+#   name                         = "ClientRule${count.index+1}"
+#   resource_group_name          = var.resource_group_name
+#   server_name                  = azurerm_sql_server.sql_dwh.name
+#   start_ip_address             = cidrhost(var.client_ip_addresses[count.index],0)
+#   end_ip_address               = cidrhost(
+#     var.client_ip_addresses[count.index],
+#     pow(
+#       2,
+#       32-split(
+#         "/",
+#         var.client_ip_addresses[count.index]
+#         )[1]
+#       )-1
+#     )
+
+#   count                        = length(var.client_ip_addresses)
+# }
 
 resource azurerm_sql_database sql_dwh {
   name                         = "${var.resource_group_name}-sqldw"

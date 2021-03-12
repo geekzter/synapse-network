@@ -8,6 +8,11 @@ variable dwu {
   default      = "DW100c"
 }
 
+variable client_ip_addresses {
+  type         = list
+  default      = []
+}
+
 variable region {
   type         = string
 }

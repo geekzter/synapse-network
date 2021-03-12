@@ -5,11 +5,9 @@ variable aws_key_name {
 variable sql_dwh_private_ip_address {
   type         = string
 }
-
 variable sql_dwh_fqdn {
   type         = string
 }
-
 variable sql_dwh_pool {
   type         = string
 }
