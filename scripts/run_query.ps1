@@ -32,14 +32,20 @@ function Execute-SqlCmd (
     Invoke-Expression "${sqlRunCommand} -P ${sqlPassword}"
     $stopwatch.Stop()
     $stopWatch | Out-File $OutputFile -Append
-    Write-Host "Retrieved ${Rows} rows in $($stopwatch.Elapsed.ToString())"
-    Write-Host "Query output and statistics written to ${OutputFile}"
+    $errors = (Get-Content $OutputFile | Select-String "Error:")
+    if ($errors) {
+        Write-Error $errors
+    } else {
+        Write-Host "Retrieved ${Rows} rows in $($stopwatch.Elapsed.ToString())"
+        Write-Host "Query output and statistics written to ${OutputFile}"
+    }
 }
 
 . (Join-Path $PSScriptRoot functions.ps1)
 
 if (!(Get-Command sqlcmd -ErrorAction SilentlyContinue)) {
     Write-Warning "sqlcmd not found, exiting..."
+    exit
 }
 
 try {
