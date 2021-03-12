@@ -8,7 +8,7 @@ variable dwu {
   default      = "DW100c"
 }
 
-variable client_ip_addresses {
+variable client_ip_prefixes {
   type         = list
   default      = []
 }

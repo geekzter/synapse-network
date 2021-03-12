@@ -45,24 +45,24 @@ resource azurerm_sql_firewall_rule terraform_client_ip_prefix {
   start_ip_address             = cidrhost(local.publicprefix,0)
   end_ip_address               = cidrhost(local.publicprefix,pow(2,32-split("/",local.publicprefix)[1])-1)
 }
-# resource azurerm_sql_firewall_rule client_prefixes {
-#   name                         = "ClientRule${count.index+1}"
-#   resource_group_name          = var.resource_group_name
-#   server_name                  = azurerm_sql_server.sql_dwh.name
-#   start_ip_address             = cidrhost(var.client_ip_addresses[count.index],0)
-#   end_ip_address               = cidrhost(
-#     var.client_ip_addresses[count.index],
-#     pow(
-#       2,
-#       32-split(
-#         "/",
-#         var.client_ip_addresses[count.index]
-#         )[1]
-#       )-1
-#     )
+resource azurerm_sql_firewall_rule client_prefixes {
+  name                         = "ClientRule${count.index+1}"
+  resource_group_name          = var.resource_group_name
+  server_name                  = azurerm_sql_server.sql_dwh.name
+  start_ip_address             = cidrhost(var.client_ip_prefixes[count.index],0)
+  end_ip_address               = cidrhost(
+    var.client_ip_prefixes[count.index],
+    pow(
+      2,
+      32-split(
+        "/",
+        var.client_ip_prefixes[count.index]
+        )[1]
+      )-1
+    )
 
-#   count                        = length(var.client_ip_addresses)
-# }
+  count                        = length(var.client_ip_prefixes)
+}
 
 resource azurerm_sql_database sql_dwh {
   name                         = "${var.resource_group_name}-sqldw"

@@ -136,7 +136,7 @@ module synapse {
   source                       = "./modules/synapse"
   region                       = var.azure_region
   resource_group_name          = azurerm_resource_group.synapse.name
-  client_ip_addresses          = module.logic_app[0].outbound_ip_addresses
+  client_ip_prefixes           = module.logic_app[0].outbound_ip_prefixes
   dwu                          = var.azure_sql_dwh_dwu
   user_name                    = var.user_name
   user_password                = local.password

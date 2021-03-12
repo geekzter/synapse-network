@@ -60,8 +60,8 @@ output azure_sql_dwh_private_ip_address {
   value        = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : null
 }
 
-output logic_app_outbound_ip_addresses {
-  value        = module.logic_app[0].outbound_ip_addresses
+output logic_app_outbound_ip_prefixes {
+  value        = module.logic_app[0].outbound_ip_prefixes
 }
 
 output user_name {
