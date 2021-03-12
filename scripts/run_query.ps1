@@ -26,7 +26,7 @@ function Open-SqlFirewall (
     if ($existingRule) {
         Write-Information "SQL Server Firewall rule '${existingRule}' already exists"
     } else {
-        Write-Host "Adding rule for SQL Server $appSQLServer to allow address $ipAddress... "
+        Write-Host "Adding rule for SQL Server ${SqlServer} to allow address $ipAddress... "
         az sql server firewall-rule create -g $ResourceGroup -s $SqlServer -n "Cloud Shell $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress --query "[].name" -o tsv
     }
 }
@@ -38,8 +38,13 @@ function Execute-SqlCmd (
     [parameter(Mandatory=$true)][string]$SqlServerFQDN,
     [parameter(Mandatory=$true)][string]$SqlDatabaseName,
     [parameter(Mandatory=$true)][string]$UserName,
-    [parameter(Mandatory=$true)][SecureString]$SecurePassword
+    [parameter(Mandatory=$true)][SecureString]$SecurePassword,
+    [parameter(Mandatory=$false)][int]$RowCount
 ) {
+    if ($RowCount -gt 10000000) {
+        Write-Warning "You're requesting ${RowCount} rows, this may take a while"
+    }
+
     $sqlPassword = ConvertFrom-SecureString -SecureString $SecurePassword -AsPlainText
     $sqlRunCommand = "sqlcmd -S $SqlServerFQDN -d $SqlDatabaseName -I -U $UserName"
 
@@ -100,4 +105,4 @@ if ($OpenFirewall) {
     Open-SqlFirewall -ResourceGroup $ResourceGroup -SqlServer $SqlServerFQDN.split(".")[0]
 }
 
-Execute-SqlCmd -QueryFile $QueryFile -OutputFile $OutputFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $SqlUser -SecurePassword $SecurePassword
+Execute-SqlCmd -QueryFile $QueryFile -OutputFile $OutputFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $SqlUser -SecurePassword $SecurePassword -RowCount $RowCount
