@@ -1,5 +1,5 @@
 #azure_sql_dwh_dwu              = "DW100c"
 #deploy_network                 = true
 #deploy_synapse                 = true
-#deploy_synapse_client          = true
+#deploy_aws_client              = true
 #user_name                      = "demoadmin"

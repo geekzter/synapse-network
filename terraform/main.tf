@@ -59,7 +59,7 @@ module aws_azure_vpn {
   count                        = var.deploy_network ? 1 : 0
 }
 
-module synapse_client {
+module aws_client {
   source                       = "./modules/aws-client"
   aws_key_name                 = aws_key_pair.pem_key.key_name
   sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
@@ -70,7 +70,7 @@ module synapse_client {
   user_name                    = var.user_name
   vpc_id                       = var.deploy_network ? module.aws_azure_vpn[0].aws_vpc_id : null
 
-  count                        = var.deploy_network && var.deploy_synapse_client ? 1 : 0
+  count                        = var.deploy_network && var.deploy_aws_client ? 1 : 0
 }
 
 module synapse {

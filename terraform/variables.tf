@@ -18,7 +18,7 @@ variable deploy_network {
   default      = true
 }
 
-variable deploy_synapse_client {
+variable deploy_aws_client {
   type         = bool
   default      = true
 }

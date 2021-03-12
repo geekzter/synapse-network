@@ -16,12 +16,12 @@ output aws_azure_ping_command {
 
 output aws_windows_vm_encrypted_password {
   sensitive    = true
-  value        = var.deploy_network && var.deploy_synapse_client ? module.synapse_client[0].vm_encrypted_password : null
+  value        = var.deploy_network && var.deploy_aws_client ? module.aws_client[0].vm_encrypted_password : null
 }
 
 output aws_windows_vm_password {
   sensitive    = true
-  value        = var.deploy_network && var.deploy_synapse_client && fileexists(var.ssh_private_key) ? rsadecrypt(module.synapse_client[0].vm_encrypted_password,file(var.ssh_private_key)) : null
+  value        = var.deploy_network && var.deploy_aws_client && fileexists(var.ssh_private_key) ? rsadecrypt(module.aws_client[0].vm_encrypted_password,file(var.ssh_private_key)) : null
 }
 
 output azure_aws_ping_command {
@@ -29,7 +29,7 @@ output azure_aws_ping_command {
 }
 
 output aws_windows_vm_public_ip_address {
-  value        = var.deploy_network && var.deploy_synapse_client ? module.synapse_client[0].vm_public_ip_address : null
+  value        = var.deploy_network && var.deploy_aws_client ? module.aws_client[0].vm_public_ip_address : null
 }
 
 output azure_linux_vm_public_ip_address {
