@@ -5,13 +5,32 @@
 #> 
 #Requires -Version 7
 param ( 
+    [parameter(Mandatory=$false)][string]$ResourceGroup,
     [parameter(Mandatory=$false)][string]$SqlServerFQDN=$null,
     [parameter(Mandatory=$false)][string]$SqlDatabaseName=$null,
     [parameter(Mandatory=$false)][string]$SqlUser=$null,
     [parameter(Mandatory=$false)][SecureString]$SecurePassword=$null,
-    [parameter(Mandatory=$false)][int]$Rows=100,
-    [parameter(Mandatory=$false)][string]$OutputFile=(New-TemporaryFile)
+    [parameter(Mandatory=$false)][int]$RowCount=100,
+    [parameter(Mandatory=$false)][string]$OutputFile=(New-TemporaryFile),
+    [parameter(Mandatory=$false)][switch]$OpenFirewall
 ) 
+
+function Open-SqlFirewall (
+    [parameter(Mandatory=$true)][string]$ResourceGroup,
+    [parameter(Mandatory=$true)][string]$SqlServer
+) {
+    $ipAddress=$(Invoke-RestMethod -Uri https://ipinfo.io/ip -MaximumRetryCount 9).Trim()
+    Write-Information "Public IP address is $ipAddress"
+
+    $existingRule = $(az sql server firewall-rule list -g aws-vpn-default-ajdi -s aws-vpn-default-ajdi-sqldwserver --query "[?startIpAddress=='$ipAddress'].name" -o tsv)
+    if ($existingRule) {
+        Write-Information "SQL Server Firewall rule '${existingRule}' already exists"
+    } else {
+        Write-Host "Adding rule for SQL Server $appSQLServer to allow address $ipAddress... "
+        az sql server firewall-rule create -g $ResourceGroup -s $SqlServer -n "Cloud Shell $ipAddress" --start-ip-address $ipAddress --end-ip-address $ipAddress --query "[].name" -o tsv
+    }
+}
+
 
 function Execute-SqlCmd (
     [parameter(Mandatory=$false)][string]$QueryFile,
@@ -24,9 +43,10 @@ function Execute-SqlCmd (
     $sqlPassword = ConvertFrom-SecureString -SecureString $SecurePassword -AsPlainText
     $sqlRunCommand = "sqlcmd -S $SqlServerFQDN -d $SqlDatabaseName -I -U $UserName"
 
-    $query = "select top ${Rows} * from dbo.Trip"
+    $query = "select top ${RowCount} * from dbo.Trip"
     $sqlRunCommand += " -Q '${query}' -e -o ${OutputFile}"
 
+    Write-Host "Retrieving ${RowCount} rows..."
     Write-Host "${sqlRunCommand} -P `<password`>" -ForegroundColor Green
     $stopwatch = [system.diagnostics.stopwatch]::StartNew()
     Invoke-Expression "${sqlRunCommand} -P ${sqlPassword}"
@@ -36,7 +56,7 @@ function Execute-SqlCmd (
     if ($errors) {
         Write-Error $errors
     } else {
-        Write-Host "Retrieved ${Rows} rows in $($stopwatch.Elapsed.ToString())"
+        Write-Host "Retrieved ${RowCount} rows in $($stopwatch.Elapsed.ToString())"
         Write-Host "Query output and statistics written to ${OutputFile}"
     }
 }
@@ -52,6 +72,9 @@ try {
     $tfdirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "terraform")
     Push-Location $tfdirectory
     
+    if (!$ResourceGroup) {
+        $ResourceGroup = (GetTerraformOutput "azure_resource_group_name")  
+    }
     if (!$SqlDatabaseName) {
         $SqlDatabaseName = (GetTerraformOutput "azure_sql_dwh_pool_name")  
     }
@@ -73,4 +96,8 @@ try {
 } finally {
     Pop-Location
 }
+if ($OpenFirewall) {
+    Open-SqlFirewall -ResourceGroup $ResourceGroup -SqlServer $SqlServerFQDN.split(".")[0]
+}
+
 Execute-SqlCmd -QueryFile $QueryFile -OutputFile $OutputFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $SqlUser -SecurePassword $SecurePassword
