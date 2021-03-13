@@ -14,52 +14,77 @@ namespace EW.Sql.Function
 {
     public static class GetRows
     {
+        private static string GetConnectionString()
+        {
+            return Environment.GetEnvironmentVariable("CONNECTION_STRING");
+        }
+
         [FunctionName("GetRows")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] HttpRequest req,
-            ILogger log)
+            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] 
+            // [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "v1/resource/{rowCount:int}")] 
+            HttpRequest req,
+            ILogger log//,
+            //int rowCount
+        )
         {
             log.LogInformation("C# HTTP trigger function processed a request.");
             int rowsRetrieved = 0;
 
-            string name = req.Query["name"];
+            string name = null;// = req.Query["name"];
 
             string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
             dynamic data = JsonConvert.DeserializeObject(requestBody);
             name = name ?? data?.name;
 
-            // Get the connection string from app settings and use it to create a connection.
-            var str = Environment.GetEnvironmentVariable("CONNECTION_STRING");
-            using (SqlConnection conn = new SqlConnection(str))
-            {
-                var query = "select top 100 * from dbo.Trip";
-
-                conn.Open();
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+            try {
+                using (SqlConnection conn = new SqlConnection(GetConnectionString()))
                 {
+                    var query = @"select top (@Count) * from dbo.Trip";
 
-                    IAsyncResult result = cmd.BeginExecuteReader(CommandBehavior.CloseConnection);
-
-                    int count = 0;
-                    while (!result.IsCompleted)
+                    conn.Open();
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        Console.WriteLine("Waiting ({0})", count++);
-                        System.Threading.Thread.Sleep(100);
-                    }
+                        cmd.Parameters.Add("@Count", SqlDbType.Int);
+                        cmd.Parameters["@Count"].Value = 1000;
+                        IAsyncResult result = cmd.BeginExecuteReader(CommandBehavior.CloseConnection);
 
-                    using (SqlDataReader reader = cmd.EndExecuteReader(result))
-                    {
-                        while (reader.Read())
+                        int count = 0;
+                        while (!result.IsCompleted)
                         {
-                            rowsRetrieved++;
-                            // for (int i = 0; i < reader.FieldCount; i++)
-                            // {
-                            //     Console.Write("{0}\t", reader.GetValue(i));
-                            // }
-                            // Console.WriteLine();
+                            Console.WriteLine("Waiting ({0})", count++);
+                            System.Threading.Thread.Sleep(100);
+                        }
+
+                        using (SqlDataReader reader = cmd.EndExecuteReader(result))
+                        {
+                            while (reader.Read())
+                            {
+                                rowsRetrieved++;
+                                // for (int i = 0; i < reader.FieldCount; i++)
+                                // {
+                                //     Console.Write("{0}\t", reader.GetValue(i));
+                                // }
+                                // Console.WriteLine();
+                            }
                         }
                     }
                 }
+            }
+            catch (SqlException ex)
+            {
+                Console.WriteLine("Error ({0}): {1}", ex.Number, ex.Message);
+                throw;
+            }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine("Error: {0}", ex.Message);
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error: {0}", ex.Message);
+                throw;
             }
             log.LogInformation($"{rowsRetrieved} rows were retrieved");
 
@@ -71,4 +96,3 @@ namespace EW.Sql.Function
         }
     }
 }
-
