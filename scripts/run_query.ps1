@@ -11,7 +11,6 @@ param (
     [parameter(Mandatory=$false)][string]$SqlUser=$null,
     [parameter(Mandatory=$false)][SecureString]$SecurePassword=$null,
     [parameter(Mandatory=$false)][int]$RowCount=100,
-    [parameter(Mandatory=$false)][string]$OutputFile=(New-TemporaryFile),
     [parameter(Mandatory=$false)][switch]$OpenFirewall
 ) 
 
@@ -31,7 +30,6 @@ function Open-SqlFirewall (
     }
 }
 
-
 function Execute-SqlCmd (
     [parameter(Mandatory=$false)][string]$QueryFile,
     [parameter(Mandatory=$false)][string]$OutputFile,
@@ -41,6 +39,8 @@ function Execute-SqlCmd (
     [parameter(Mandatory=$true)][SecureString]$SecurePassword,
     [parameter(Mandatory=$false)][int]$RowCount
 ) {
+    $outputFile = (New-TemporaryFile)
+
     if ($RowCount -gt 10000000) {
         Write-Warning "You're requesting ${RowCount} rows, this may take a while"
     }
@@ -48,6 +48,7 @@ function Execute-SqlCmd (
     $sqlPassword = ConvertFrom-SecureString -SecureString $SecurePassword -AsPlainText
     $sqlRunCommand = "sqlcmd -S $SqlServerFQDN -d $SqlDatabaseName -I -U $UserName"
 
+    # Substitute with [int] parameters only
     $query = "select top ${RowCount} * from dbo.Trip"
     $sqlRunCommand += " -Q '${query}' -e -o ${OutputFile}"
 
@@ -56,13 +57,13 @@ function Execute-SqlCmd (
     $stopwatch = [system.diagnostics.stopwatch]::StartNew()
     Invoke-Expression "${sqlRunCommand} -P ${sqlPassword}"
     $stopwatch.Stop()
-    $stopWatch | Out-File $OutputFile -Append
-    $errors = (Get-Content $OutputFile | Select-String "Error:")
+    $stopWatch | Out-File $outputFile -Append
+    $errors = (Get-Content $outputFile | Select-String "Error:")
     if ($errors) {
         Write-Error $errors
     } else {
         Write-Host "Retrieved ${RowCount} rows in $($stopwatch.Elapsed.ToString())"
-        Write-Host "Query output and statistics written to ${OutputFile}"
+        Write-Host "Query output and statistics written to ${outputFile}"
     }
 }
 
@@ -105,4 +106,4 @@ if ($OpenFirewall) {
     Open-SqlFirewall -ResourceGroup $ResourceGroup -SqlServer $SqlServerFQDN.split(".")[0]
 }
 
-Execute-SqlCmd -QueryFile $QueryFile -OutputFile $OutputFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $SqlUser -SecurePassword $SecurePassword -RowCount $RowCount
+Execute-SqlCmd -QueryFile $QueryFile -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -UserName $SqlUser -SecurePassword $SecurePassword -RowCount $RowCount
