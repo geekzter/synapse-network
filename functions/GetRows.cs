@@ -1,6 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
-using System.IO;
+using System.Diagnostics;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -14,6 +15,30 @@ namespace EW.Sql.Function
 {
     public static class GetRows
     {
+        private const string TimerFormat = @"hh\:mm\:ss";
+
+        private static SqlCommand CreateQueryCommand(SqlConnection connection, int rowCount)
+        {
+            var query = @"select top (@Count) * from dbo.Trip";
+            SqlCommand command = new SqlCommand(query, connection);
+            command.Parameters.Add("@Count", SqlDbType.Int);
+            command.Parameters["@Count"].Value = Math.Min(rowCount,10000000);
+
+            return command;
+        }
+
+        private static string FormatTimers(Dictionary<string, TimeSpan> timers) {
+            string result = String.Empty;
+
+            foreach (string snapshot in timers.Keys) {
+                TimeSpan timer = timers[snapshot];
+                string elapsed = timer.ToString(TimerFormat);
+                result += String.Format("\n{0}: {1}",snapshot,elapsed);
+            }
+
+            return result;
+        }
+
         private static string GetConnectionString()
         {
             return Environment.GetEnvironmentVariable("CONNECTION_STRING");
@@ -21,45 +46,40 @@ namespace EW.Sql.Function
 
         [FunctionName("GetRows")]
         public static async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = null)] 
-            // [HttpTrigger(AuthorizationLevel.Function, "get", "post", Route = "v1/resource/{rowCount:int}")] 
+            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "v1/top/{rowCount:int}")] 
             HttpRequest req,
-            ILogger log//,
-            //int rowCount
+            ILogger log,
+            int rowCount = 100
         )
         {
-            log.LogInformation("C# HTTP trigger function processed a request.");
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            log.LogInformation("Start processing request: {0}",stopwatch.Elapsed.ToString(TimerFormat));
             int rowsRetrieved = 0;
-
-            string name = null;// = req.Query["name"];
-
-            string requestBody = await new StreamReader(req.Body).ReadToEndAsync();
-            dynamic data = JsonConvert.DeserializeObject(requestBody);
-            name = name ?? data?.name;
 
             try {
                 using (SqlConnection conn = new SqlConnection(GetConnectionString()))
                 {
-                    var query = @"select top (@Count) * from dbo.Trip";
-
                     conn.Open();
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    log.LogInformation("Connection opened: {0}",stopwatch.Elapsed.ToString(TimerFormat));
+                    using (SqlCommand cmd = CreateQueryCommand(conn, rowCount))
                     {
-                        cmd.Parameters.Add("@Count", SqlDbType.Int);
-                        cmd.Parameters["@Count"].Value = 1000;
                         IAsyncResult result = cmd.BeginExecuteReader(CommandBehavior.CloseConnection);
+                        log.LogInformation("Query submitted: {0}",stopwatch.Elapsed.ToString(TimerFormat));
 
-                        int count = 0;
                         while (!result.IsCompleted)
                         {
-                            Console.WriteLine("Waiting ({0})", count++);
+                            log.LogDebug("Waiting for result: {0}",stopwatch.Elapsed.ToString(TimerFormat));
                             System.Threading.Thread.Sleep(100);
                         }
+                        log.LogInformation("Query completed: {0}",stopwatch.Elapsed.ToString(TimerFormat));
 
                         using (SqlDataReader reader = cmd.EndExecuteReader(result))
                         {
                             while (reader.Read())
                             {
+                                if (rowsRetrieved == 0) {
+                                    log.LogInformation("First bytes received {0}: ",stopwatch.Elapsed.ToString(TimerFormat));
+                                }
                                 rowsRetrieved++;
                                 // for (int i = 0; i < reader.FieldCount; i++)
                                 // {
@@ -68,30 +88,30 @@ namespace EW.Sql.Function
                                 // Console.WriteLine();
                             }
                         }
+                        log.LogInformation("{0} rows spooled {0}: ",rowsRetrieved,stopwatch.Elapsed.ToString(TimerFormat));
                     }
                 }
             }
             catch (SqlException ex)
             {
-                Console.WriteLine("Error ({0}): {1}", ex.Number, ex.Message);
+                log.LogCritical(ex.Number,ex,ex.Message);
+                // Console.WriteLine("Error ({0}): {1}", ex.Number, ex.Message);
                 throw;
             }
             catch (InvalidOperationException ex)
             {
-                Console.WriteLine("Error: {0}", ex.Message);
+                log.LogCritical(ex,ex.Message);
+                // Console.WriteLine("Error: {0}", ex.Message);
                 throw;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Error: {0}", ex.Message);
+                log.LogCritical(ex,ex.Message);
+                // Console.WriteLine("Error: {0}", ex.Message);
                 throw;
             }
-            log.LogInformation($"{rowsRetrieved} rows were retrieved");
 
-            string responseMessage = string.IsNullOrEmpty(name)
-                ? "This HTTP triggered function executed successfully. Pass a name in the query string or in the request body for a personalized response."
-                : $"Hello, {name}. This HTTP triggered function executed successfully.";
-
+            string responseMessage = String.Format("{0} rows were retrieved in {1}",rowsRetrieved,stopwatch.Elapsed.ToString(TimerFormat));
             return new OkObjectResult(responseMessage);
         }
     }
