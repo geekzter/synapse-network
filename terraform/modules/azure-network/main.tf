@@ -42,6 +42,8 @@ resource azurerm_nat_gateway egress {
   location                     = data.azurerm_resource_group.rg.location
   resource_group_name          = data.azurerm_resource_group.rg.name
   sku_name                     = "Standard"
+
+  tags                         = data.azurerm_resource_group.rg.tags
 }
 resource azurerm_public_ip egress {
   name                         = "${azurerm_nat_gateway.egress.name}-ip"
@@ -49,6 +51,8 @@ resource azurerm_public_ip egress {
   resource_group_name          = data.azurerm_resource_group.rg.name
   allocation_method            = "Static"
   sku                          = "Standard"
+
+  tags                         = data.azurerm_resource_group.rg.tags
 }
 resource azurerm_nat_gateway_public_ip_association egress {
   nat_gateway_id               = azurerm_nat_gateway.egress.id

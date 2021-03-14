@@ -49,6 +49,8 @@ resource azurerm_app_service_plan functions {
       kind
     ]
   }
+
+  tags                         = data.azurerm_resource_group.rg.tags
 }
 resource azurerm_function_app top_test {
   name                         = "${var.resource_group_name}-top-test"
@@ -71,6 +73,8 @@ resource azurerm_function_app top_test {
                                  os_type
     ]
   }  
+
+  tags                         = data.azurerm_resource_group.rg.tags
 }
 resource azurerm_app_service_virtual_network_swift_connection network {
   app_service_id               = azurerm_function_app.top_test.id
@@ -110,4 +114,6 @@ resource azurerm_logic_app_workflow workflow {
       parameters
     ]
   }
+
+  tags                         = data.azurerm_resource_group.rg.tags
 }

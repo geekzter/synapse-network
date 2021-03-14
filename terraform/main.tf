@@ -14,9 +14,10 @@ locals {
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   suffix                       = random_string.suffix.result
   tags                         = map(
-    "application",               "AWS-Azure VPN",
+    "application",               "Synapse Performance",
     "environment",               "dev",
     "provisioner",               "terraform",
+    "repository",                "aws-azure-vpn",
     "suffix",                    local.suffix,
     "workspace",                 terraform.workspace
   )
