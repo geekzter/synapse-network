@@ -90,4 +90,4 @@ try {
 $securePassword = ConvertTo-SecureString $SqlPassword -AsPlainText -Force
 $securePassword.MakeReadOnly()
 
-ImportDatabase -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -ResourceGroup $ResourceGroup -UserName $SqlUser -Password $securePassword -TimeoutSeconds 1200
+ImportDatabase -SqlDatabaseName $SqlDatabaseName -SqlServerFQDN $SqlServerFQDN -ResourceGroup $ResourceGroup -UserName $SqlUser -Password $securePassword 

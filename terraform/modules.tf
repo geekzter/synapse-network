@@ -51,12 +51,14 @@ module azure_client {
 module logic_app {
   source                       = "./modules/logic-app"
   appinsights_instrumentation_key = azurerm_application_insights.insights.instrumentation_key
-  configure_egress             = false
+  configure_egress             = true
   egress_subnet_id             = var.deploy_network ? module.azure_network[0].azure_app_service_subnet_id : null
+  location                     = var.azure_region
   log_analytics_workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
   resource_group_name          = azurerm_resource_group.synapse.name
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
+  suffix                       = local.suffix
   user_name                    = var.user_name
   user_password                = local.password
 
@@ -115,7 +117,8 @@ module synapse {
   region                       = var.azure_region
   resource_group_name          = azurerm_resource_group.synapse.name
   # client_ip_prefixes           = local.concat_prefix_list
-  client_ip_prefixes           = var.deploy_logic_app ? slice(concat(module.logic_app.0.outbound_ip_prefixes,local.fixed_prefix_list),0,length(local.fixed_prefix_list)) : local.fixed_prefix_list
+  # client_ip_prefixes           = var.deploy_logic_app ? slice(concat(module.logic_app.0.outbound_ip_prefixes,local.fixed_prefix_list),0,length(local.fixed_prefix_list)) : local.fixed_prefix_list
+  client_ip_prefixes           = [local.publicprefix]
   dwu                          = var.azure_sql_dwh_dwu
   user_name                    = var.user_name
   user_password                = local.password

@@ -26,10 +26,13 @@ resource azurerm_subnet app_service {
   address_prefixes             = ["10.0.3.0/24"]
 
   delegation {
-    name = "appservice_delegation"
+    name                       = "appservice_delegation"
 
     service_delegation {
-      name    = "Microsoft.Web/serverFarms"
+      name                     = "Microsoft.Web/serverFarms"
+      actions                  = [
+        "Microsoft.Network/virtualNetworks/subnets/action",
+      ]
     }
   }
 }

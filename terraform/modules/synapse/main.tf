@@ -31,20 +31,6 @@ data http localpublicprefix {
 # Get public IP prefix of the machine running this terraform template
   url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${local.publicip}"
 }
-resource azurerm_sql_firewall_rule terraform_client_ip {
-  name                         = "TerraformClientIpRule"
-  resource_group_name          = var.resource_group_name
-  server_name                  = azurerm_sql_server.sql_dwh.name
-  start_ip_address             = local.publicip
-  end_ip_address               = local.publicip
-}
-resource azurerm_sql_firewall_rule terraform_client_ip_prefix {
-  name                         = "TerraformClientIpPrefixRule"
-  resource_group_name          = var.resource_group_name
-  server_name                  = azurerm_sql_server.sql_dwh.name
-  start_ip_address             = cidrhost(local.publicprefix,0)
-  end_ip_address               = cidrhost(local.publicprefix,pow(2,32-split("/",local.publicprefix)[1])-1)
-}
 resource azurerm_sql_firewall_rule client_prefixes {
   name                         = "ClientRule${count.index+1}"
   resource_group_name          = var.resource_group_name
@@ -61,9 +47,9 @@ resource azurerm_sql_firewall_rule client_prefixes {
       )-1
     )
 
-  # count                        = length(var.client_ip_prefixes)
+  count                        = length(var.client_ip_prefixes)
   # HACK: We know there are 40
-  count                        = 40
+  # count                        = 40
 }
 
 resource azurerm_sql_database sql_dwh {

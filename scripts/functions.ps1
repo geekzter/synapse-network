@@ -91,7 +91,7 @@ function Execute-Sql (
     [parameter(Mandatory=$true)][string]$SqlServerFQDN,
     [parameter(Mandatory=$false)][string]$UserName,
     [parameter(Mandatory=$false)][SecureString]$SecurePassword,
-    [parameter(Mandatory=$false)][int]$TimeoutSeconds=100
+    [parameter(Mandatory=$false)][int]$TimeoutSeconds=3600
 ) {
     if ([string]::IsNullOrEmpty($SqlServerFQDN)) {
         Write-Error "No SQL Server specified" -ForeGroundColor Red
