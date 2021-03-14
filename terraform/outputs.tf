@@ -1,9 +1,9 @@
 output aws_linux_vm_public_ip_address {
-  value        = var.deploy_s2s_vpn ? module.aws_azure_vpn[0].aws_linux_vm_public_ip_address : null
+  value        = var.deploy_s2s_vpn ? module.aws_azure_vpn.0.aws_linux_vm_public_ip_address : null
 }
 
 output aws_linux_vm_private_ip_address {
-  value        = var.deploy_s2s_vpn ? module.aws_azure_vpn[0].aws_linux_vm_private_ip_address : null
+  value        = var.deploy_s2s_vpn ? module.aws_azure_vpn.0.aws_linux_vm_private_ip_address : null
 }
 
 output aws_linux_vm_user_name {
@@ -11,33 +11,33 @@ output aws_linux_vm_user_name {
 }
 
 output aws_azure_ping_command {
-  value        = var.deploy_s2s_vpn ? "ssh ubuntu@${module.aws_azure_vpn[0].aws_linux_vm_public_ip_address} ping ${module.aws_azure_vpn[0].azure_linux_vm_private_ip_address} -c 4" : null
+  value        = var.deploy_s2s_vpn ? "ssh ubuntu@${module.aws_azure_vpn.0.aws_linux_vm_public_ip_address} ping ${module.aws_azure_vpn.0.azure_linux_vm_private_ip_address} -c 4" : null
 }
 
 output aws_windows_vm_encrypted_password {
   sensitive    = true
-  value        = var.deploy_s2s_vpn && var.deploy_aws_client ? module.aws_client[0].vm_encrypted_password : null
+  value        = var.deploy_s2s_vpn && var.deploy_aws_client ? module.aws_client.0.vm_encrypted_password : null
 }
 
 output aws_windows_vm_password {
   sensitive    = true
-  value        = var.deploy_s2s_vpn && var.deploy_aws_client && fileexists(var.ssh_private_key) ? rsadecrypt(module.aws_client[0].vm_encrypted_password,file(var.ssh_private_key)) : null
+  value        = var.deploy_s2s_vpn && var.deploy_aws_client && fileexists(var.ssh_private_key) ? rsadecrypt(module.aws_client.0.vm_encrypted_password,file(var.ssh_private_key)) : null
 }
 
 output azure_aws_ping_command {
-  value        = var.deploy_s2s_vpn ? "ssh ${var.user_name}@${module.aws_azure_vpn[0].azure_linux_vm_public_ip_address} ping ${module.aws_azure_vpn[0].aws_linux_vm_private_ip_address} -c 4" : null
+  value        = var.deploy_s2s_vpn ? "ssh ${var.user_name}@${module.aws_azure_vpn.0.azure_linux_vm_public_ip_address} ping ${module.aws_azure_vpn.0.aws_linux_vm_private_ip_address} -c 4" : null
 }
 
 output aws_windows_vm_public_ip_address {
-  value        = var.deploy_s2s_vpn && var.deploy_aws_client ? module.aws_client[0].vm_public_ip_address : null
+  value        = var.deploy_s2s_vpn && var.deploy_aws_client ? module.aws_client.0.vm_public_ip_address : null
 }
 
 output azure_linux_vm_public_ip_address {
-  value        = var.deploy_s2s_vpn ? module.aws_azure_vpn[0].azure_linux_vm_public_ip_address : null
+  value        = var.deploy_s2s_vpn ? module.aws_azure_vpn.0.azure_linux_vm_public_ip_address : null
 }
 
 output azure_linux_vm_private_ip_address {
-  value        = var.deploy_s2s_vpn ? module.aws_azure_vpn[0].azure_linux_vm_private_ip_address : null
+  value        = var.deploy_s2s_vpn ? module.aws_azure_vpn.0.azure_linux_vm_private_ip_address : null
 }
 
 output azure_resource_group_id {
@@ -49,20 +49,20 @@ output azure_resource_group_name {
 }
 
 output azure_sql_dwh_fqdn {
-  value        = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : null
+  value        = var.deploy_synapse ? module.synapse.0.sql_dwh_fqdn : null
 }
 
 output azure_sql_dwh_pool_name {
-  value        = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : null
+  value        = var.deploy_synapse ? module.synapse.0.sql_dwh_pool_name : null
 }
 
 output azure_sql_dwh_private_ip_address {
-  value        = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : null
+  value        = var.deploy_synapse ? module.synapse.0.sql_dwh_private_ip_address : null
 }
 
-output logic_app_outbound_ip_prefixes {
-  value        = var.deploy_logic_app ? module.logic_app[0].outbound_ip_prefixes : null
-}
+# output logic_app_outbound_ip_prefixes {
+#   value        = var.deploy_logic_app ? module.logic_app.0.outbound_ip_prefixes : null
+# }
 
 output user_name {
   sensitive    = false

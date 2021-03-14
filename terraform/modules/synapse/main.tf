@@ -62,8 +62,8 @@ resource azurerm_sql_firewall_rule client_prefixes {
     )
 
   # count                        = length(var.client_ip_prefixes)
-  # HACK: We know there are 32
-  count                        = 32
+  # HACK: We know there are 40
+  count                        = 40
 }
 
 resource azurerm_sql_database sql_dwh {

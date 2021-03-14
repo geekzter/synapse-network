@@ -59,13 +59,6 @@ resource azurerm_resource_group synapse {
   tags                         = local.tags
 }
 
-module azure_network {
-  source                       = "./modules/azure-network"
-  resource_group_name          = azurerm_resource_group.synapse.name
-
-  count                        = var.deploy_network ? 1 : 0
-}
-
 resource azurerm_storage_account automation_storage {
   name                         = "${lower(substr(replace(azurerm_resource_group.synapse.name,"/a|e|i|o|u|y|-/",""),0,20))}${local.suffix}"
   location                     = azurerm_resource_group.synapse.location

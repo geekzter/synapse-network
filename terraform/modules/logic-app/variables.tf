@@ -1,5 +1,12 @@
 variable appinsights_instrumentation_key {}
 
+variable configure_egress {
+  type = bool
+}
+variable egress_subnet_id {}
+
+variable log_analytics_workspace_resource_id {}
+
 variable resource_group_name {
   type         = string
 }
