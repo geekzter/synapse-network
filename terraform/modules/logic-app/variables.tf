@@ -1,3 +1,5 @@
+variable appinsights_instrumentation_key {}
+
 variable resource_group_name {
   type         = string
 }

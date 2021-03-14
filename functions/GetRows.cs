@@ -41,7 +41,7 @@ namespace EW.Sql.Function
 
         private static string GetConnectionString()
         {
-            return Environment.GetEnvironmentVariable("CONNECTION_STRING");
+            return Environment.GetEnvironmentVariable("SYNAPSE_CONNECTION_STRING");
         }
 
         [FunctionName("GetRows")]

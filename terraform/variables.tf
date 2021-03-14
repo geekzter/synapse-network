@@ -33,9 +33,22 @@ variable deploy_azure_client {
   default      = true
 }
 
+variable deploy_logic_app {
+  type         = bool
+  default      = true
+}
+
 variable deploy_synapse {
   type         = bool
   default      = true
+}
+
+variable log_analytics_solutions {
+# List of solutions: https://docs.microsoft.com/en-us/rest/api/loganalytics/workspaces/listintelligencepacks
+# Get-AzOperationalInsightsIntelligencePack
+  default                      = [
+    "AzureSQLAnalytics"
+  ]
 }
 
 # Used to decrypt EC2 passwords
