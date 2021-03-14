@@ -1,0 +1,6 @@
+requests
+| project timestamp, id, operation_Name, success, resultCode, duration, operation_Id, cloud_RoleName, rows=split(customDimensions['HttpPath'],"/")[-1]
+| where timestamp > ago(30d)
+| where cloud_RoleName =~ 'synapse-network-performance-default-padb-top-test' and operation_Name =~ 'GetRows'
+| order by timestamp desc
+| take 20

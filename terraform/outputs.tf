@@ -1,3 +1,8 @@
+output application_insights_instrumentation_key {
+  value        = azurerm_application_insights.insights.instrumentation_key
+}
+
+
 output aws_linux_vm_public_ip_address {
   value        = var.deploy_s2s_vpn ? module.aws_azure_vpn.0.aws_linux_vm_public_ip_address : null
 }
