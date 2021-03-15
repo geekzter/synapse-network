@@ -113,7 +113,7 @@ You can of course run this anywhere you like, provided you have PowerShell and s
 ### Scheduled Azure Function
 For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
 
-
+![alt text](visuals/function.png "Alert email message")   
 This function retrieves all requested rows from Synapase Analytics, and then discards them:
 ```
 using (SqlDataReader reader = cmd.EndExecuteReader(result))
