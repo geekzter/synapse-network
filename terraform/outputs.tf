@@ -45,6 +45,10 @@ output azure_linux_vm_private_ip_address {
   value        = var.deploy_s2s_vpn ? module.aws_azure_vpn.0.azure_linux_vm_private_ip_address : null
 }
 
+output azure_windows_vm_public_ip_address {
+  value        = var.deploy_azure_client ? module.azure_client.0.public_ip_address : null
+}
+
 output azure_resource_group_id {
   value        = azurerm_resource_group.synapse.id
 }

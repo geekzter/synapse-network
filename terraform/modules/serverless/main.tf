@@ -90,7 +90,7 @@ resource azurerm_monitor_scheduled_query_rules_alert top_test_alert {
   }
   data_source_id               = var.appinsights_id
   description                  = "Alert when # low performing queries goes over threshold"
-  enabled                      = true
+  enabled                      = false
   query                        = file("${path.root}/../kusto/alert.kql")
   severity                     = 2
   frequency                    = 5
