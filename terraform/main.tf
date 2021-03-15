@@ -83,37 +83,3 @@ resource azurerm_storage_container scripts {
   storage_account_name         = azurerm_storage_account.automation_storage.name
   container_access_type        = "container"
 }
-
-resource azurerm_log_analytics_workspace workspace {
-  name                         = "${azurerm_resource_group.synapse.name}-loganalytics"
-  location                     = azurerm_resource_group.synapse.location
-  resource_group_name          = azurerm_resource_group.synapse.name
-  sku                          = "Standalone"
-  retention_in_days            = 90 
-
-  tags                         = azurerm_resource_group.synapse.tags
-}
-
-resource azurerm_log_analytics_solution solutions {
-  solution_name                 = each.value
-  location                      = azurerm_log_analytics_workspace.workspace.location
-  resource_group_name           = azurerm_log_analytics_workspace.workspace.resource_group_name
-  workspace_resource_id         = azurerm_log_analytics_workspace.workspace.id
-  workspace_name                = azurerm_log_analytics_workspace.workspace.name
-
-  plan {
-    publisher                   = "Microsoft"
-    product                     = "OMSGallery/${each.value}"
-  }
-
-  for_each                      = toset(var.log_analytics_solutions)
-} 
-
-resource azurerm_application_insights insights {
-  name                         = "${azurerm_resource_group.synapse.name}-insights"
-  location                     = azurerm_log_analytics_workspace.workspace.location
-  resource_group_name          = azurerm_resource_group.synapse.name
-  application_type             = "web"
-
-  tags                         = azurerm_resource_group.synapse.tags
-}

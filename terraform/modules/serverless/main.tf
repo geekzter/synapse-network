@@ -39,10 +39,6 @@ resource azurerm_app_service_plan functions {
     # https://docs.microsoft.com/en-us/azure/app-service/web-sites-integrate-with-vnet
     tier                       = var.configure_egress ? "Standard" : "Dynamic"
     size                       = var.configure_egress ? "S1" : "Y1"
-    # tier                       = "Standard"
-    # size                       = "S1"
-    # tier                       = "Dynamic"
-    # size                       = "Y1"
   }
 
   lifecycle {
@@ -83,6 +79,27 @@ resource azurerm_app_service_virtual_network_swift_connection network {
 
   count                        = var.configure_egress ? 1 : 0
 }
+resource azurerm_monitor_scheduled_query_rules_alert top_test_alert {
+  name                         = "${azurerm_function_app.top_test.name}-alert"
+  resource_group_name          = var.resource_group_name
+  location                     = var.location
+
+  action {
+    action_group               = [var.monitor_action_group_id]
+    email_subject              = "Synapse test query is taking longer than expected"
+  }
+  data_source_id               = var.appinsights_id
+  description                  = "Alert when # low performing queries goes over threshold"
+  enabled                      = true
+  query                        = file("${path.root}/../kusto/alert.kql")
+  severity                     = 2
+  frequency                    = 5
+  time_window                  = 30
+  trigger {
+    operator                   = "GreaterThan"
+    threshold                  = 2
+  }
+}
 resource azurerm_monitor_diagnostic_setting function_logs {
   name                         = "Function_Logs"
   target_resource_id           = azurerm_function_app.top_test.id
@@ -105,6 +122,7 @@ resource azurerm_monitor_diagnostic_setting function_logs {
   }
 }
 
+
 resource azurerm_logic_app_workflow workflow {
   name                         = "${var.resource_group_name}-workflow"
   resource_group_name          = var.resource_group_name
@@ -117,4 +135,27 @@ resource azurerm_logic_app_workflow workflow {
   }
 
   tags                         = data.azurerm_resource_group.rg.tags
+}
+resource azurerm_monitor_diagnostic_setting start_workflow {
+  name                         = "${azurerm_logic_app_workflow.workflow.name}-logs"
+  target_resource_id           = azurerm_logic_app_workflow.workflow.id
+  log_analytics_workspace_id   = var.log_analytics_workspace_resource_id
+
+  log {
+    category                   = "WorkflowRuntime"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = true
+      days                     = 30
+    }
+  }
+  metric {
+    category                   = "AllMetrics"
+
+    retention_policy {
+      enabled                  = true
+      days                     = 30
+    }
+  }
 }

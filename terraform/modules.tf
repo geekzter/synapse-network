@@ -50,11 +50,13 @@ module azure_client {
 
 module serverless {
   source                       = "./modules/serverless"
+  appinsights_id               = azurerm_application_insights.insights.id
   appinsights_instrumentation_key = azurerm_application_insights.insights.instrumentation_key
   configure_egress             = true
   egress_subnet_id             = var.deploy_network ? module.azure_network[0].azure_app_service_subnet_id : null
   location                     = var.azure_region
   log_analytics_workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
+  monitor_action_group_id      = azurerm_monitor_action_group.arm_roles.id
   resource_group_name          = azurerm_resource_group.synapse.name
   row_count                    = var.serverless_row_count
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
@@ -121,6 +123,7 @@ module synapse {
   # client_ip_prefixes           = var.deploy_serverless ? slice(concat(module.serverless.0.outbound_ip_prefixes,local.fixed_prefix_list),0,length(local.fixed_prefix_list)) : local.fixed_prefix_list
   client_ip_prefixes           = [local.publicprefix]
   dwu                          = var.azure_sql_dwh_dwu
+  log_analytics_workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
   user_name                    = var.user_name
   user_password                = local.password
   create_network_resources     = var.deploy_network

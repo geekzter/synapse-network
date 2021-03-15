@@ -1,3 +1,5 @@
+variable monitor_action_group_id {}
+variable appinsights_id {}
 variable appinsights_instrumentation_key {}
 
 variable configure_egress {

@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+//using System.Threading.Tasks;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights.Extensibility;
+//using Microsoft.AspNetCore.Http;
+//using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.WebJobs;
-using Microsoft.Azure.WebJobs.Extensions.Http;
+//using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
@@ -15,24 +18,13 @@ namespace EW.Sql.Function
     public class GetRows
     {
         private const string TimerFormat = @"hh\:mm\:ss";
+        private readonly TelemetryClient telemetryClient;
 
-        private static string GetConnectionString()
+        /// Using dependency injection will guarantee that you use the same configuration for telemetry collected automatically and manually.
+        public GetRows(TelemetryConfiguration telemetryConfiguration)
         {
-            return Environment.GetEnvironmentVariable("SYNAPSE_CONNECTION_STRING");
-        }
-
-        private static int GetRowCount(ILogger log)
-        {
-            var rawValue = Environment.GetEnvironmentVariable("SYNAPSE_ROW_COUNT");
-
-            int rowCount;
-            if (Int32.TryParse(rawValue, out rowCount)) {
-                return rowCount;
-            } else {
-                log.LogWarning("SYNAPSE_ROW_COUNT not set to a valid value, assuming value '100'");
-                return 100;
-            }
-        }
+            this.telemetryClient = new TelemetryClient(telemetryConfiguration);
+        }        
 
         [FunctionName("GetRows")]
         public void Run(
@@ -92,10 +84,34 @@ namespace EW.Sql.Function
 
                 // Rethrow exception
                 throw;
+            } finally {
+                var properties = new Dictionary<string,string> {
+                    { "RowsRequested",rowCount.ToString() },
+                    { "RowsRetrieved",rowsRetrieved.ToString() }
+                };
+                this.telemetryClient.TrackTrace("RunResult",SeverityLevel.Information,properties);
             }
             
             string responseMessage = String.Format("{0} rows were retrieved in {1}",rowsRetrieved,stopwatch.Elapsed.ToString(TimerFormat));
             log.LogInformation(responseMessage);
+        }
+
+        private static string GetConnectionString()
+        {
+            return Environment.GetEnvironmentVariable("SYNAPSE_CONNECTION_STRING");
+        }
+
+        private static int GetRowCount(ILogger log)
+        {
+            var rawValue = Environment.GetEnvironmentVariable("SYNAPSE_ROW_COUNT");
+
+            int rowCount;
+            if (Int32.TryParse(rawValue, out rowCount)) {
+                return rowCount;
+            } else {
+                log.LogWarning("SYNAPSE_ROW_COUNT not set to a valid value, assuming value '100'");
+                return 100;
+            }
         }
 
         private static SqlCommand CreateQueryCommand(SqlConnection connection, int rowCount)

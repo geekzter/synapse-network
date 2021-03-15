@@ -63,6 +63,74 @@ resource azurerm_sql_database sql_dwh {
 
   tags                         = data.azurerm_resource_group.rg.tags
 }
+resource azurerm_monitor_diagnostic_setting sql_dwh_logs {
+  name                         = "Synapse_Logs"
+  target_resource_id           = azurerm_sql_database.sql_dwh.id
+  log_analytics_workspace_id   = var.log_analytics_workspace_resource_id
+
+  log {
+    category                   = "DmsWorkers"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  log {
+    category                   = "ExecRequests"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  log {
+    category                   = "RequestSteps"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  log {
+    category                   = "SqlRequests"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  log {
+    category                   = "Waits"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  metric {
+    category                   = "Basic"
+
+    retention_policy {
+      enabled                  = false
+    }
+  } 
+  metric {
+    category                   = "InstanceAndAppAdvanced"
+
+    retention_policy {
+      enabled                  = false
+    }
+  } 
+  metric {
+    category                   = "WorkloadManagement"
+
+    retention_policy {
+      enabled                  = false
+    }
+  } 
+}
 
 resource azurerm_private_dns_zone sql_dns_zone {
   name                         = "privatelink.database.windows.net"

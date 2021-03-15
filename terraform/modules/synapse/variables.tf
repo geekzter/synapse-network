@@ -13,6 +13,8 @@ variable client_ip_prefixes {
   default      = []
 }
 
+variable log_analytics_workspace_resource_id {}
+
 variable region {
   type         = string
 }
