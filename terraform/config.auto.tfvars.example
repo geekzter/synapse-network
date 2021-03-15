@@ -3,5 +3,6 @@
 #deploy_azure_client            = true
 #deploy_network                 = true
 #deploy_s2s_vpn                 = false
+#deploy_serverless              = true
 #deploy_synapse                 = true
 #user_name                      = "demoadmin"

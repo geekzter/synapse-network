@@ -9,6 +9,7 @@ locals {
     # FUNCTIONS_EXTENSION_VERSION = "~3"
     FUNCTIONS_WORKER_RUNTIME   = "dotnet"
     SYNAPSE_CONNECTION_STRING  = local.sql_connection_string
+    SYNAPSE_ROW_COUNT          = var.row_count
     WEBSITE_CONTENTSHARE       = "${var.resource_group_name}-top-test-content"
     WEBSITE_CONTENTAZUREFILECONNECTIONSTRING = "DefaultEndpointsProtocol=https;AccountName=${azurerm_storage_account.functions.name};AccountKey=${azurerm_storage_account.functions.primary_access_key};EndpointSuffix=core.windows.net"
     WEBSITE_DNS_SERVER         = var.configure_egress ? "168.63.129.16" : null # Private DNS

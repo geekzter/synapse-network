@@ -33,7 +33,7 @@ variable deploy_azure_client {
   default      = true
 }
 
-variable deploy_logic_app {
+variable deploy_serverless {
   type         = bool
   default      = true
 }
@@ -49,6 +49,11 @@ variable log_analytics_solutions {
   default                      = [
     "AzureSQLAnalytics"
   ]
+}
+
+variable serverless_row_count {
+  type         = number
+  default      = 1000000
 }
 
 # Used to decrypt EC2 passwords

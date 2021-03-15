@@ -13,6 +13,8 @@ variable resource_group_name {
   type         = string
 }
 
+variable row_count {}
+
 variable sql_dwh_fqdn {
   type         = string
 }

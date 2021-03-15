@@ -21,16 +21,32 @@ namespace EW.Sql.Function
             return Environment.GetEnvironmentVariable("SYNAPSE_CONNECTION_STRING");
         }
 
+        private static int GetRowCount(ILogger log)
+        {
+            var rawValue = Environment.GetEnvironmentVariable("SYNAPSE_ROW_COUNT");
+
+            int rowCount;
+            if (Int32.TryParse(rawValue, out rowCount)) {
+                return rowCount;
+            } else {
+                log.LogWarning("SYNAPSE_ROW_COUNT not set to a valid value, assuming value '100'");
+                return 100;
+            }
+        }
+
         [FunctionName("GetRows")]
-        public async Task<IActionResult> Run(
-            [HttpTrigger(AuthorizationLevel.Function, "get", Route = "v1/top/{rowCount:int}")] 
-            HttpRequest req,
-            ILogger log,
-            int rowCount = 100
+        public void Run(
+            [TimerTrigger("0 */5 * * * *", RunOnStartup = true, UseMonitor = true)]TimerInfo timer,
+            ILogger log
         )
         {
+            if (timer.IsPastDue)
+            {
+                log.LogInformation("Timer is running late!");
+            }
+            log.LogInformation($"Start processing at: {DateTime.Now}");
             Stopwatch stopwatch = Stopwatch.StartNew();
-            log.LogInformation("Start processing request: {0}",stopwatch.Elapsed.ToString(TimerFormat));
+            int rowCount = GetRowCount(log);
             int rowsRetrieved = 0;
 
             try {
@@ -79,7 +95,7 @@ namespace EW.Sql.Function
             }
             
             string responseMessage = String.Format("{0} rows were retrieved in {1}",rowsRetrieved,stopwatch.Elapsed.ToString(TimerFormat));
-            return new OkObjectResult(responseMessage);
+            log.LogInformation(responseMessage);
         }
 
         private static SqlCommand CreateQueryCommand(SqlConnection connection, int rowCount)

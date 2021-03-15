@@ -66,7 +66,7 @@ output azure_sql_dwh_private_ip_address {
 }
 
 # output logic_app_outbound_ip_prefixes {
-#   value        = var.deploy_logic_app ? module.logic_app.0.outbound_ip_prefixes : null
+#   value        = var.deploy_serverless ? module.serverless.0.outbound_ip_prefixes : null
 # }
 
 output user_name {

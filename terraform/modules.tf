@@ -48,21 +48,22 @@ module azure_client {
   count                        = var.deploy_network && var.deploy_azure_client ? 1 : 0
 }
 
-module logic_app {
-  source                       = "./modules/logic-app"
+module serverless {
+  source                       = "./modules/serverless"
   appinsights_instrumentation_key = azurerm_application_insights.insights.instrumentation_key
   configure_egress             = true
   egress_subnet_id             = var.deploy_network ? module.azure_network[0].azure_app_service_subnet_id : null
   location                     = var.azure_region
   log_analytics_workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
   resource_group_name          = azurerm_resource_group.synapse.name
+  row_count                    = var.serverless_row_count
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
   suffix                       = local.suffix
   user_name                    = var.user_name
   user_password                = local.password
 
-  count                        = var.deploy_logic_app && var.deploy_synapse ? 1 : 0
+  count                        = var.deploy_serverless && var.deploy_synapse ? 1 : 0
   depends_on                   = [module.azure_network]
 }
 
@@ -110,14 +111,14 @@ locals {
     local.publicprefix,
   ]
   # HACK: Terraform needs to know the # of list elements before apply, so create a fixed length list that contains everything
-  # concat_prefix_list           = var.deploy_logic_app ? slice(concat(module.logic_app.0.outbound_ip_prefixes,local.fixed_prefix_list),0,length(local.fixed_prefix_list)) : local.fixed_prefix_list
+  # concat_prefix_list           = var.deploy_serverless ? slice(concat(module.serverless.0.outbound_ip_prefixes,local.fixed_prefix_list),0,length(local.fixed_prefix_list)) : local.fixed_prefix_list
 }
 module synapse {
   source                       = "./modules/synapse"
   region                       = var.azure_region
   resource_group_name          = azurerm_resource_group.synapse.name
   # client_ip_prefixes           = local.concat_prefix_list
-  # client_ip_prefixes           = var.deploy_logic_app ? slice(concat(module.logic_app.0.outbound_ip_prefixes,local.fixed_prefix_list),0,length(local.fixed_prefix_list)) : local.fixed_prefix_list
+  # client_ip_prefixes           = var.deploy_serverless ? slice(concat(module.serverless.0.outbound_ip_prefixes,local.fixed_prefix_list),0,length(local.fixed_prefix_list)) : local.fixed_prefix_list
   client_ip_prefixes           = [local.publicprefix]
   dwu                          = var.azure_sql_dwh_dwu
   user_name                    = var.user_name
