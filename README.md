@@ -7,7 +7,7 @@ For connectivity Site-to-Site VPN ([aws-azure-vpn](/terraform/modules/aws-azure-
 
 ## Pre-requisites
 - To get started you need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS, [Homebrew](https://github.com/hashicorp/homebrew-tap) on macOS or [chocolatey](https://chocolatey.org/packages/terraform) on Windows)
-- A SSH public key (default location is ~/.ssh/id_rsa.pub). This key is also used to create secrets for EC2 instances, [which requires](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-key-pairs.html) the private key to be in PEM format
+- A SSH public key (default location is ~/.ssh/id_rsa.pub). If you choose to provision AWS resourcses (see below), this key is also used to create secrets for EC2 instances, [which requires](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-key-pairs.html) the private key to be in PEM format
 - There are some scripts to make life easier, you'll need [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) to execute those    
 
 If you create a GitHub [Codespace](https://github.com/features/codespaces) for this repository, you'll get the above set up - including a generated SSH key pair.
@@ -84,7 +84,7 @@ AWS_ACCESS_KEY_ID="AAAAAAAAAAAAAAAAAAAA"
 AWS_DEFAULT_REGION="eu-west-1"
 AWS_SECRET_ACCESS_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
-![alt text](visuals/diagram.png "Infrastructure")    
+![alt text](visuals/s2svpn.png "Infrastructure")    
 
 The approach is simular to using the Azure VM. Instead of DNS, in this scenario automation has the hosts file edited to append a line to resolve Synapse Analytics to the Private Endpoint in the Azure Virtual Network. This will than connect over the Site-to-Site VPN created.
 
@@ -102,10 +102,41 @@ Instead of wriring the result to the terminal (which would dramatically slow dow
 You can of course run this locally as well.
 
 ### Scheduled Azure Function
-TBD
+For intermittent performance issue's, it is valuable to meassure query times on a regular schedule and capture the results. This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger. This function retrieves data from Synapase, and then discards it:
+```
+using (SqlDataReader reader = cmd.EndExecuteReader(result))
+{
+    while (reader.Read())
+    {
+        rowsRetrieved++;
 
+        // Read all fields
+        for (int i = 0; i < reader.FieldCount; i++)
+        {
+            reader.GetValue(i);
+        }
+    }
+}
+```
 
+In addition to the function, Terraform also provisions Application Insights, and an alert rule with action group. This is an example alert email message:
+![alt text](visuals/alertmessage.png "Alert email message")   
 
+This alert is defined by a Kusto query:
+```
+requests
+| join (traces) on operation_Id
+| where message == "RunResult"
+| project timestamp, operation_Name, success, resultCode, duration, rows_requested=customDimensions1['RowsRequested'], rows_retrieved=customDimensions1['RowsRetrieved'], cloud_RoleName
+| where timestamp > ago(30d)
+| where cloud_RoleName contains_cs 'synapse' and operation_Name =~ 'GetRows' and duration > 40000
+| order by timestamp desc
+```
+
+And yields a reult similar to the below data:
+![alt text](visuals/loganalyticsresults.png "Alert email message")   
+
+## Clean up
 When you want to destroy resources, run:   
 ```
 terraform destroy

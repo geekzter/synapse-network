@@ -34,11 +34,8 @@ resource azurerm_application_insights insights {
 data azurerm_role_definition contributor {
   name                         = "Contributor"
 }
-data azurerm_role_definition sql_db_contributor {
-  name                         = "SQL DB Contributor"
-}
-data azurerm_role_definition sql_server_contributor {
-  name                         = "SQL Server Contributor"
+data azurerm_role_definition owner {
+  name                         = "Owner"
 }
 resource azurerm_monitor_action_group arm_roles {
   name                         = "${azurerm_resource_group.synapse.name}-alert-group"
@@ -52,13 +49,8 @@ resource azurerm_monitor_action_group arm_roles {
     use_common_alert_schema    = true
   }
   arm_role_receiver {
-    name                       = data.azurerm_role_definition.sql_db_contributor.name
-    role_id                    = split("/",data.azurerm_role_definition.sql_db_contributor.id)[4]
-    use_common_alert_schema    = true
-  }
-  arm_role_receiver {
-    name                       = data.azurerm_role_definition.sql_server_contributor.name
-    role_id                    = split("/",data.azurerm_role_definition.sql_server_contributor.id)[4]
+    name                       = data.azurerm_role_definition.owner.name
+    role_id                    = split("/",data.azurerm_role_definition.owner.id)[4]
     use_common_alert_schema    = true
   }
 
