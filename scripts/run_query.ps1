@@ -21,7 +21,7 @@ function Open-SqlFirewall (
     $ipAddress=$(Invoke-RestMethod -Uri https://ipinfo.io/ip -MaximumRetryCount 9).Trim()
     Write-Information "Public IP address is $ipAddress"
 
-    $existingRule = $(az sql server firewall-rule list -g aws-vpn-default-ajdi -s aws-vpn-default-ajdi-sqldwserver --query "[?startIpAddress=='$ipAddress'].name" -o tsv)
+    $existingRule = $(az sql server firewall-rule list -g $ResourceGroup -s $SqlServer --query "[?startIpAddress=='$ipAddress'].name" -o tsv)
     if ($existingRule) {
         Write-Information "SQL Server Firewall rule '${existingRule}' already exists"
     } else {
