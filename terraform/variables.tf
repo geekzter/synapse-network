@@ -18,7 +18,22 @@ variable deploy_network {
   default      = true
 }
 
-variable deploy_synapse_client {
+variable deploy_s2s_vpn {
+  type         = bool
+  default      = false
+}
+
+variable deploy_aws_client {
+  type         = bool
+  default      = false
+}
+
+variable deploy_azure_client {
+  type         = bool
+  default      = true
+}
+
+variable deploy_serverless {
   type         = bool
   default      = true
 }
@@ -26,6 +41,19 @@ variable deploy_synapse_client {
 variable deploy_synapse {
   type         = bool
   default      = true
+}
+
+variable log_analytics_solutions {
+# List of solutions: https://docs.microsoft.com/en-us/rest/api/loganalytics/workspaces/listintelligencepacks
+# Get-AzOperationalInsightsIntelligencePack
+  default                      = [
+    "AzureSQLAnalytics"
+  ]
+}
+
+variable serverless_row_count {
+  type         = number
+  default      = 1000000
 }
 
 # Used to decrypt EC2 passwords

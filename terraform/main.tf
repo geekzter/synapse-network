@@ -1,10 +1,23 @@
+data http localpublicip {
+# Get public IP address of the machine running this terraform template
+  url                          = "http://ipinfo.io/ip"
+# url                          = "https://ipapi.co/ip" 
+}
+data http localpublicprefix {
+# Get public IP prefix of the machine running this terraform template
+  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${local.publicip}"
+}
+
 locals {
   password                     = ".Az9${random_string.password.result}"
+  publicip                     = chomp(data.http.localpublicip.body)
+  publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   suffix                       = random_string.suffix.result
   tags                         = map(
-    "application",               "AWS-Azure VPN",
+    "application",               "Synapse Performance",
     "environment",               "dev",
     "provisioner",               "terraform",
+    "repository",                "aws-azure-vpn",
     "suffix",                    local.suffix,
     "workspace",                 terraform.workspace
   )
@@ -36,52 +49,37 @@ resource aws_key_pair pem_key {
   public_key                   = file(var.ssh_public_key)
 
   tags                         = local.tags
+
+  count                        = var.deploy_aws_client || var.deploy_s2s_vpn ? 1 : 0
 }
 
-resource azurerm_resource_group vpn {
-  name                         = "aws-vpn-${terraform.workspace}-${local.suffix}"
+resource azurerm_resource_group synapse {
+  name                         = "synapse-network-performance-${terraform.workspace}-${local.suffix}"
   location                     = var.azure_region
 
   tags                         = local.tags
 }
 
-# Credits: https://deployeveryday.com/2020/04/13/vpn-aws-azure-terraform.html
-module aws_azure_vpn {
-  source                       = "./modules/aws-azure-vpn"
-  aws_key_name                 = aws_key_pair.pem_key.key_name
-  azure_region                 = var.azure_region
-  azure_resource_group_name    = azurerm_resource_group.vpn.name
-  user_name                    = var.user_name
-  user_password                = local.password
-  ssh_private_key              = var.ssh_private_key
-  ssh_public_key               = var.ssh_public_key
+resource azurerm_storage_account automation_storage {
+  name                         = "${lower(substr(replace(azurerm_resource_group.synapse.name,"/a|e|i|o|u|y|-/",""),0,20))}${local.suffix}"
+  location                     = azurerm_resource_group.synapse.location
+  resource_group_name          = azurerm_resource_group.synapse.name
+  account_kind                 = "StorageV2"
+  account_tier                 = "Standard"
+  account_replication_type     = "LRS"
+  allow_blob_public_access     = true
+  blob_properties {
+    delete_retention_policy {
+      days                     = 365
+    }
+  }
+  enable_https_traffic_only    = true
 
-  count                        = var.deploy_network ? 1 : 0
+  tags                         = azurerm_resource_group.synapse.tags
 }
 
-module synapse_client {
-  source                       = "./modules/aws-client"
-  aws_key_name                 = aws_key_pair.pem_key.key_name
-  sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
-  sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
-  sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
-  subnet_id                    = var.deploy_network ? module.aws_azure_vpn[0].aws_subnet_id : null
-  suffix                       = local.suffix
-  user_name                    = var.user_name
-  vpc_id                       = var.deploy_network ? module.aws_azure_vpn[0].aws_vpc_id : null
-
-  count                        = var.deploy_network && var.deploy_synapse_client ? 1 : 0
-}
-
-module synapse {
-  source                       = "./modules/synapse"
-  region                       = var.azure_region
-  resource_group_name          = azurerm_resource_group.vpn.name
-  dwu                          = var.azure_sql_dwh_dwu
-  user_name                    = var.user_name
-  user_password                = local.password
-  create_network_resources     = var.deploy_network
-  subnet_id                    = var.deploy_network ? module.aws_azure_vpn[0].azure_subnet_id : null
-
-  count                        = var.deploy_synapse ? 1 : 0
+resource azurerm_storage_container scripts {
+  name                         = "scripts"
+  storage_account_name         = azurerm_storage_account.automation_storage.name
+  container_access_type        = "container"
 }

@@ -32,8 +32,8 @@ backend.tf
 # Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
 # example: *tfplan*
 
-# Ignore generated file(s)
-client.rdp
+# Ignore generated files
+data/**
 
 # Ignore temporary files
 *.log

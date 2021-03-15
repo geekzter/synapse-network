@@ -1,12 +1,12 @@
 terraform {
   required_providers {
-    aws                        = "~> 3.12"
-    azurerm                    = "~> 2.33"
-    local                      = "~> 2.0.0"
-    null                       = "~> 3.0.0"
-    random                     = "~> 3.0.0"
+    aws                        = "~> 3.32"
+    azurerm                    = "~> 2.51"
+    local                      = "~> 2.1"
+    null                       = "~> 3.1"
+    random                     = "~> 3.1"
   }
-  required_version             = "~> 0.13.5"
+  required_version             = "~> 0.14.7"
 }
 
 provider "aws" {

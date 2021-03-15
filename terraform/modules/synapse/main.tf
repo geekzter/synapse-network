@@ -1,4 +1,6 @@
 locals {
+  publicip                     = chomp(data.http.localpublicip.body)
+  publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   subnet_name                  = var.create_network_resources ? element(split("/",var.subnet_id),length(split("/",var.subnet_id))-1) : null
   virtual_network_id           = var.create_network_resources ? replace(var.subnet_id,"/subnets/${local.subnet_name}","") : null
   virtual_network_name         = var.create_network_resources ? element(split("/",local.virtual_network_id),length(split("/",local.virtual_network_id))-1) : null
@@ -7,6 +9,7 @@ locals {
 data azurerm_resource_group rg {
   name                         = var.resource_group_name
 }
+
 
 resource azurerm_sql_server sql_dwh {
   name                         = "${var.resource_group_name}-sqldwserver"
@@ -19,6 +22,36 @@ resource azurerm_sql_server sql_dwh {
   tags                         = data.azurerm_resource_group.rg.tags
 }
 
+data http localpublicip {
+# Get public IP address of the machine running this terraform template
+  url                          = "http://ipinfo.io/ip"
+# url                          = "https://ipapi.co/ip" 
+}
+data http localpublicprefix {
+# Get public IP prefix of the machine running this terraform template
+  url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${local.publicip}"
+}
+resource azurerm_sql_firewall_rule client_prefixes {
+  name                         = "ClientRule${count.index+1}"
+  resource_group_name          = var.resource_group_name
+  server_name                  = azurerm_sql_server.sql_dwh.name
+  start_ip_address             = cidrhost(var.client_ip_prefixes[count.index],0)
+  end_ip_address               = cidrhost(
+    var.client_ip_prefixes[count.index],
+    pow(
+      2,
+      32-split(
+        "/",
+        var.client_ip_prefixes[count.index]
+        )[1]
+      )-1
+    )
+
+  count                        = length(var.client_ip_prefixes)
+  # HACK: We know there are 40
+  # count                        = 40
+}
+
 resource azurerm_sql_database sql_dwh {
   name                         = "${var.resource_group_name}-sqldw"
   resource_group_name          = var.resource_group_name
@@ -29,6 +62,74 @@ resource azurerm_sql_database sql_dwh {
   requested_service_objective_name = var.dwu
 
   tags                         = data.azurerm_resource_group.rg.tags
+}
+resource azurerm_monitor_diagnostic_setting sql_dwh_logs {
+  name                         = "Synapse_Logs"
+  target_resource_id           = azurerm_sql_database.sql_dwh.id
+  log_analytics_workspace_id   = var.log_analytics_workspace_resource_id
+
+  log {
+    category                   = "DmsWorkers"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  log {
+    category                   = "ExecRequests"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  log {
+    category                   = "RequestSteps"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  log {
+    category                   = "SqlRequests"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+  log {
+    category                   = "Waits"
+    enabled                    = true
+
+    retention_policy {
+      enabled                  = false
+    }
+  }
+
+  metric {
+    category                   = "Basic"
+
+    retention_policy {
+      enabled                  = false
+    }
+  } 
+  metric {
+    category                   = "InstanceAndAppAdvanced"
+
+    retention_policy {
+      enabled                  = false
+    }
+  } 
+  metric {
+    category                   = "WorkloadManagement"
+
+    retention_policy {
+      enabled                  = false
+    }
+  } 
 }
 
 resource azurerm_private_dns_zone sql_dns_zone {

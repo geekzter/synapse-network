@@ -65,5 +65,5 @@ resource local_file rdp_file {
   {
     host                       = aws_instance.windows_vm.public_ip
   })
-  filename                     = "${path.root}/../client.rdp"
+  filename                     = "${path.root}/../data/${terraform.workspace}/azure-client.rdp"
 }

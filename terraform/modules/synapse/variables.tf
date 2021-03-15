@@ -8,6 +8,13 @@ variable dwu {
   default      = "DW100c"
 }
 
+variable client_ip_prefixes {
+  type         = list
+  default      = []
+}
+
+variable log_analytics_workspace_resource_id {}
+
 variable region {
   type         = string
 }

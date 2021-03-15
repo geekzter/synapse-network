@@ -1,5 +1,8 @@
 #azure_sql_dwh_dwu              = "DW100c"
+#deploy_aws_client              = false
+#deploy_azure_client            = true
 #deploy_network                 = true
+#deploy_s2s_vpn                 = false
+#deploy_serverless              = true
 #deploy_synapse                 = true
-#deploy_synapse_client          = true
 #user_name                      = "demoadmin"

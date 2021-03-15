@@ -4,6 +4,13 @@
 # Update relevant packages
 sudo apt-get update
 #sudo apt-get install --only-upgrade -y azure-cli powershell
+if (!(Get-Command func -ErrorAction SilentlyContinue)) {
+    sudo apt-get install -y azure-functions-core-tools
+}
+if (!(Get-Command sqlcmd -ErrorAction SilentlyContinue)) {
+    sudo ACCEPT_EULA=Y apt install msodbcsql17 -y
+    sudo ACCEPT_EULA=Y apt install mssql-tools -y
+}
 if (!(Get-Command tmux -ErrorAction SilentlyContinue)) {
     sudo apt-get install -y tmux
 }
