@@ -28,6 +28,7 @@ variable suffix {
   type         = string
 }
 
+variable user_assigned_identity_id {}
 variable user_name {
   type         = string
 }

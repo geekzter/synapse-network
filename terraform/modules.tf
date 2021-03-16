@@ -42,6 +42,7 @@ module azure_client {
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
   sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
   subnet_id                    = module.azure_network[0].azure_vm_subnet_id
+  user_assigned_identity_id    = azurerm_user_assigned_identity.client_identity.id
   user_name                    = var.user_name
   user_password                = local.password
 
@@ -62,6 +63,7 @@ module serverless {
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
   suffix                       = local.suffix
+  user_assigned_identity_id    = azurerm_user_assigned_identity.client_identity.id
   user_name                    = var.user_name
   user_password                = local.password
 

@@ -26,7 +26,6 @@ resource azurerm_storage_account functions {
   account_tier                 = "Standard"
   account_replication_type     = "LRS"
 }
-
 resource azurerm_app_service_plan functions {
   name                         = "${var.resource_group_name}-functions"
   resource_group_name          = var.resource_group_name
@@ -55,6 +54,10 @@ resource azurerm_function_app top_test {
   location                     = var.location
   app_service_plan_id          = azurerm_app_service_plan.functions.id
   app_settings                 = local.app_service_settings
+  identity {
+    type                       = "UserAssigned"
+    identity_ids               = [var.user_assigned_identity_id]
+  }
   site_config {
     always_on                  = true
   }
@@ -121,7 +124,6 @@ resource azurerm_monitor_diagnostic_setting function_logs {
     }
   }
 }
-
 
 resource azurerm_logic_app_workflow workflow {
   name                         = "${var.resource_group_name}-workflow"

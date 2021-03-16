@@ -53,6 +53,15 @@ resource aws_key_pair pem_key {
   count                        = var.deploy_aws_client || var.deploy_s2s_vpn ? 1 : 0
 }
 
+resource azurerm_user_assigned_identity client_identity {
+  name                         = "${azurerm_resource_group.synapse.name}-client-identity"
+  location                     = azurerm_resource_group.synapse.location
+  resource_group_name          = azurerm_resource_group.synapse.name
+
+  tags                         = local.tags
+}
+
+
 resource azurerm_resource_group synapse {
   name                         = "synapse-network-performance-${terraform.workspace}-${local.suffix}"
   location                     = var.azure_region

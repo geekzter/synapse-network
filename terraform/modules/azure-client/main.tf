@@ -125,6 +125,11 @@ resource azurerm_windows_virtual_machine vm {
     })
   }
 
+  identity {
+    type                       = "UserAssigned"
+    identity_ids               = [var.user_assigned_identity_id]
+  }
+
   tags                         = data.azurerm_resource_group.rg.tags
 }
 

@@ -145,7 +145,7 @@ requests
 | order by timestamp desc
 ```
 
-And yields a reult similar to the below data:
+And yields a result similar to the below data:
 ![alt text](visuals/loganalyticsresults.png "Alert email message")   
 
 ## Clean up

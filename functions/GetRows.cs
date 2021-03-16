@@ -46,7 +46,7 @@ namespace EW.Sql.Function
                 {
                     conn.Open();
                     log.LogInformation("Connection opened: {0}",stopwatch.Elapsed.ToString(TimerFormat));
-                    using (SqlCommand cmd = CreateQueryCommand(conn, rowCount))
+                    using (SqlCommand cmd = CreateQueryCommand(conn, rowCount, this.telemetryClient.Context.Operation.Id))
                     {
                         IAsyncResult result = cmd.BeginExecuteReader(CommandBehavior.CloseConnection);
                         log.LogInformation("Query submitted: {0}",stopwatch.Elapsed.ToString(TimerFormat));
@@ -114,12 +114,14 @@ namespace EW.Sql.Function
             }
         }
 
-        private static SqlCommand CreateQueryCommand(SqlConnection connection, int rowCount)
+        private static SqlCommand CreateQueryCommand(SqlConnection connection, int rowCount, string label = "GetRows")
         {
-            var query = @"select top (@Count) * from dbo.Trip";
+            var query = @"select top (@Count) * from dbo.Trip option (label = '@Label')";
             SqlCommand command = new SqlCommand(query, connection);
             command.Parameters.Add("@Count", SqlDbType.Int);
             command.Parameters["@Count"].Value = Math.Min(rowCount,10000000);
+            command.Parameters.Add("@Label", SqlDbType.VarChar);
+            command.Parameters["@Label"].Value = label;
 
             return command;
         }
