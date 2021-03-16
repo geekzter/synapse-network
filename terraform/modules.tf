@@ -121,6 +121,8 @@ module synapse {
   source                       = "./modules/synapse"
   region                       = var.azure_region
   resource_group_name          = azurerm_resource_group.synapse.name
+  admin_object_id              = data.azurerm_client_config.current.object_id
+  # admin_object_id              = azurerm_user_assigned_identity client_identity.principal_id
   # client_ip_prefixes           = local.concat_prefix_list
   # client_ip_prefixes           = var.deploy_serverless ? slice(concat(module.serverless.0.outbound_ip_prefixes,local.fixed_prefix_list),0,length(local.fixed_prefix_list)) : local.fixed_prefix_list
   client_ip_prefixes           = [local.publicprefix]

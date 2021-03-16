@@ -6,10 +6,10 @@ locals {
   virtual_network_name         = var.create_network_resources ? element(split("/",local.virtual_network_id),length(split("/",local.virtual_network_id))-1) : null
 }
 
+data azurerm_client_config current {}
 data azurerm_resource_group rg {
   name                         = var.resource_group_name
 }
-
 
 resource azurerm_sql_server sql_dwh {
   name                         = "${var.resource_group_name}-sqldwserver"
@@ -21,6 +21,13 @@ resource azurerm_sql_server sql_dwh {
 
   tags                         = data.azurerm_resource_group.rg.tags
 }
+resource azurerm_sql_active_directory_administrator dba {
+  server_name                  = azurerm_sql_server.sql_dwh.name
+  resource_group_name          = azurerm_sql_server.sql_dwh.resource_group_name
+  login                        = var.admin_object_id
+  object_id                    = var.admin_object_id
+  tenant_id                    = data.azurerm_client_config.current.tenant_id
+} 
 
 data http localpublicip {
 # Get public IP address of the machine running this terraform template

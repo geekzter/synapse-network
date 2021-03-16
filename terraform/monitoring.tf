@@ -29,12 +29,12 @@ resource azurerm_application_insights insights {
   resource_group_name          = azurerm_resource_group.synapse.name
   application_type             = "web"
 
+  # Associate with Log Analytics workspace
   provisioner local-exec {
-    # command                    = "az monitor app-insights component update -a ${self.name} -g ${self.resource_group_name} --workspace ${azurerm_log_analytics_workspace.workspace.id}"
-    command                    = <<-EOT
-      az config set extension.use_dynamic_install=yes_without_prompt
-      az monitor app-insights component update -a ${self.name} -g ${self.resource_group_name} --workspace ${azurerm_log_analytics_workspace.workspace.id}
-    EOT    
+    command                    = "az monitor app-insights component update -a ${self.name} -g ${self.resource_group_name} --workspace ${azurerm_log_analytics_workspace.workspace.id}"
+    environment                = {
+      AZURE_EXTENSION_USE_DYNAMIC_INSTALL = "yes_without_prompt"
+    }  
   }
   tags                         = azurerm_resource_group.synapse.tags
 }

@@ -8,6 +8,8 @@ data http localpublicprefix {
   url                          = "https://stat.ripe.net/data/network-info/data.json?resource=${local.publicip}"
 }
 
+data azurerm_client_config current {}
+
 locals {
   password                     = ".Az9${random_string.password.result}"
   publicip                     = chomp(data.http.localpublicip.body)

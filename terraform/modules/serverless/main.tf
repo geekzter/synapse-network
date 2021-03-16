@@ -91,7 +91,8 @@ resource azurerm_monitor_scheduled_query_rules_alert top_test_alert {
     action_group               = [var.monitor_action_group_id]
     email_subject              = "Synapse test query is taking longer than expected"
   }
-  data_source_id               = var.appinsights_id
+  # data_source_id               = var.appinsights_id
+  data_source_id               = var.log_analytics_workspace_resource_id
   description                  = "Alert when # low performing queries goes over threshold"
   enabled                      = false
   query                        = file("${path.root}/../kusto/alert.kql")

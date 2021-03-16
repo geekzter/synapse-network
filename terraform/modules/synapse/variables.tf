@@ -1,3 +1,5 @@
+variable admin_object_id {}
+
 variable create_network_resources {
   type         = bool
   default      = false
