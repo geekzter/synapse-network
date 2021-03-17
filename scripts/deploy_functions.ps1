@@ -18,13 +18,11 @@ try {
     
     $functionName = (GetTerraformOutput "function_name")  
 
-    func azure functionapp publish $functionName -b
+    $functionDirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "functions")
+    Push-Location $functionDirectory
+
+    func azure functionapp publish $functionName -b local --list-included-files
+    Pop-Location
 } finally {
     Pop-Location
 }
-
-
-# dotnet clean /property:GenerateFullPaths=true /consoleloggerparameters:NoSummary 
-# dotnet build /property:GenerateFullPaths=true /consoleloggerparameters:NoSummary
-
-# dotnet publish --configuration Release /property:GenerateFullPaths=true /consoleloggerparameters:NoSummary
