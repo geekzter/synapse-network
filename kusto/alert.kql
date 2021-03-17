@@ -1,7 +1,11 @@
 AppRequests
-| join (AppTraces) on OperationId
-| where Message == "RunResult"
-| project TimeGenerated, OperationName, Success, ResultCode, DurationMs, RowsRequested=Properties['RowsRequested'], RowsRetrieved=Properties['RowsRetrieved'], AppRoleName
+| join (AppTraces
+    | where Message == "RunResult"
+    | project OperationId, RowsRequested=Properties['RowsRequested'], RowsRetrieved=Properties['RowsRetrieved']) on OperationId
+//| join (AzureDiagnostics 
+//    | where Category == "ExecRequests" and Command_s contains "Trip" 
+//    | project OperationId=replace("-","",Label_g)) on OperationId
+| project TimeGenerated, OperationId, OperationName, Success, ResultCode, DurationMs, RowsRequested, RowsRetrieved, AppRoleName
 | where TimeGenerated > ago(30d)
 | where AppRoleName contains_cs 'synapse' and OperationName =~ 'GetRows' and DurationMs > 40000
 | order by TimeGenerated desc

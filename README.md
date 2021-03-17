@@ -8,6 +8,7 @@ This repo can be used to demonstrate performance of connectivity between various
 ## Pre-requisites
 - To get started you need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS, [Homebrew](https://github.com/hashicorp/homebrew-tap) on macOS or [chocolatey](https://chocolatey.org/packages/terraform) on Windows)
 - A SSH public key (default location is ~/.ssh/id_rsa.pub). If you choose to provision AWS resourcses (see below), this key is also used to create secrets for EC2 instances, [which requires](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-key-pairs.html) the private key to be in PEM format
+- To build & deploy the Azure Function, you'll need the [.NET 3.1 SDK](https://dotnet.microsoft.com/download/dotnet/3.1) and the [Azure Function Tools](https://www.npmjs.com/package/azure-functions-core-tools)
 - There are some scripts to make life easier, you'll need [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) to execute those    
 
 If you create a GitHub [Codespace](https://github.com/features/codespaces) for this repository, you'll get the above set up - including a generated SSH key pair.
@@ -60,7 +61,7 @@ The infrastructure provisioned can support various test scenarios, and therefore
 
 
 ### From Azure VM
-`deploy_azure_client` should be set to `true` when provisioning infrastructure. Once provisioned, you can log on the the Azure VM. The username is `demoadmin`. Use configuration data from Terraform to get the password and public IP address:
+Terraform input variable`deploy_azure_client` should be set to `true` when provisioning infrastructure. Once provisioned, you can log on the the Azure VM. The username is `demoadmin`. Use configuration data from Terraform to get the password and public IP address:
 ```
 terraform output user_name
 terraform output user_password
@@ -80,7 +81,7 @@ This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when exe
 ![alt text](visuals/100m.png "SQL Server Management Studio")
 
 ### From AWS VM
-`deploy_aws_client` should be set to `true` when provisioning infrastructure.
+Terraform input variable`deploy_aws_client` should be set to `true` when provisioning infrastructure.
 You will need an AWS account. There are [multiple ways](https://registry.terraform.io/providers/hashicorp/aws/latest/docs) to configure the AWS Terraform provider, I tested with static credentials:
 ```
 AWS_ACCESS_KEY_ID="AAAAAAAAAAAAAAAAAAAA"
@@ -110,8 +111,8 @@ Instead of wriring the result to the terminal (which would dramatically slow dow
 
 You can of course run this anywhere you like, provided you have PowerShell and sqlcmd installed.
 
-### Scheduled Azure Function
-For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
+### Timer Azure Function
+For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, run `deploy_function.ps1` to publish the Azure Function. This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
 
 ![alt text](visuals/function.png "Alert email message")   
 This function retrieves all requested rows from Synapase Analytics, and then discards them:
@@ -136,13 +137,14 @@ In addition to the function, Terraform also provisions Application Insights, and
 
 This alert is defined by a Kusto query:
 ```
-requests
-| join (traces) on operation_Id
-| where message == "RunResult"
-| project timestamp, operation_Name, success, resultCode, duration, rows_requested=customDimensions1['RowsRequested'], rows_retrieved=customDimensions1['RowsRetrieved'], cloud_RoleName
-| where timestamp > ago(30d)
-| where cloud_RoleName contains_cs 'synapse' and operation_Name =~ 'GetRows' and duration > 40000
-| order by timestamp desc
+AppRequests
+| join (AppTraces
+    | where Message == "RunResult"
+    | project OperationId, RowsRequested=Properties['RowsRequested'], RowsRetrieved=Properties['RowsRetrieved']) on OperationId
+| project TimeGenerated, OperationId, OperationName, Success, ResultCode, DurationMs, RowsRequested, RowsRetrieved, AppRoleName
+| where TimeGenerated > ago(30d)
+| where AppRoleName contains_cs 'synapse' and OperationName =~ 'GetRows' and DurationMs > 40000
+| order by TimeGenerated desc
 ```
 
 And yields a result similar to the below data:

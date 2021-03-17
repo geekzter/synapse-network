@@ -11,6 +11,9 @@ locals {
   outbound_ip_prefixes2        = [for ip in local.outbound_ip_addresses : "${ip}/32"]
 }
 
+output function_name {
+  value                        = azurerm_function_app.top_test.name
+}
 
 output outbound_ip_prefixes {
   value                        = sort(distinct(concat(

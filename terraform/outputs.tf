@@ -69,6 +69,10 @@ output azure_sql_dwh_private_ip_address {
   value        = var.deploy_synapse ? module.synapse.0.sql_dwh_private_ip_address : null
 }
 
+output function_name {
+  value        = var.deploy_serverless && var.deploy_synapse ? module.serverless.0.function_name : null
+}
+
 output log_analytics_workspace_id {
   value        = azurerm_log_analytics_workspace.workspace.id
 }
