@@ -155,8 +155,31 @@ AppRequests
 | order by TimeGenerated desc
 ```
 
+You can also join the metrics from both Application Insights with ExecRequests configured to be logged to Log Analytics. This provides end-to-end and Synapse query time in a single view:
+```
+AppRequests
+AppRequests
+| join (AppTraces
+    | where Message == "RunResult"
+    | project OperationId, RowsRequested=Properties['RowsRequested'], RowsRetrieved=Properties['RowsRetrieved']) on OperationId
+| join (AzureDiagnostics 
+   | where Category == "ExecRequests" and Status_s == "Completed" 
+   | project OperationId=replace("-","",Label_g), SqlDuration=EndTime_t-StartTime_t) on OperationId
+| extend FunctionDuration=DurationMs*1ms
+| extend FunctionDurationSeconds=DurationMs/1000
+| extend SqlDurationSeconds=SqlDuration/1s
+| project TimeGenerated, OperationId, OperationName, Success, ResultCode, FunctionDurationSeconds, FunctionDuration, SqlDurationSeconds, SqlDuration, RowsRequested, RowsRetrieved, AppRoleName
+| where TimeGenerated > ago(30d)
+| where AppRoleName contains_cs 'synapse' and OperationName =~ 'GetRows'
+| order by TimeGenerated desc
+| render timechart
+```
+
 And yields a result similar to the below data:
 ![](visuals/loganalyticsresults.png "Log Analytics query results")   
+
+Chart view:
+<p align="center"><img src="visuals/chart.png" width="100%"></p>
 
 ## Clean up
 When you want to destroy resources, run:   
