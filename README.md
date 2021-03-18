@@ -114,10 +114,12 @@ You can of course run this anywhere you like, provided you have PowerShell and s
 
 ### Timer Azure Function
 For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. 
-![alt text](visuals/function.png)  
+<img src="visuals/function.png" width="75%" align="middle">
+
 This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
-Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, either run `deploy_function.ps1` or use the function tools to publish the Azure Function. 
-![alt text](visuals/functiontools.png)    
+Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, either run `deploy_function.ps1` or use the function tools to publish the Azure Function.     
+
+<img src="visuals/functiontools.png" width="50%">
  
 This function retrieves all requested rows from Synapase Analytics, and then discards them:
 ```
