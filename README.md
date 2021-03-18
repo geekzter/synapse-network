@@ -79,7 +79,9 @@ select top 100000000 * from dbo.Trip
 ```
 This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam). Using the public endpoint instead of S2S VPN and private endpoint yields the same results, both paths are taking a direct route.  
 
-![alt text](visuals/100m.png "SQL Server Management Studio")
+<p align="center">
+<img src="visuals/100m.png">
+</p>
 
 ### From AWS VM
 Terraform input variable`deploy_aws_client` should be set to `true` when provisioning infrastructure.
@@ -90,7 +92,7 @@ AWS_DEFAULT_REGION="eu-west-1"
 AWS_SECRET_ACCESS_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 For connectivity Site-to-Site VPN ([aws-azure-vpn](/terraform/modules/aws-azure-vpn) module) is used, which implements the AWS - Azure S2S VPN described in this [excellent blog post](https://deployeveryday.com/2020/04/13/vpn-aws-azure-terraform.html) by [Jonatas Baldin](https://deployeveryday.com/about.html).
-![alt text](visuals/s2svpn.png "Infrastructure")    
+![](visuals/s2svpn.png "Infrastructure")    
 
 The approach is simular to using the Azure VM, these output variables are relevant to set up a RDP connection:
 ```
@@ -103,23 +105,23 @@ Instead of DNS, in this scenario [automation](https://docs.aws.amazon.com/AWSEC2
 In this scenario, you can run the [run_query.ps1](scripts/run_query.ps1) script that uses the [sqlcmd](https://docs.microsoft.com/en-us/sql/tools/sqlcmd-utility?view=azure-sqldw-latest) tool to execute a query against Synapse Analytics.
 
 If you provisioned Terraform from the same directory, or have a backend set up, there are no mandatory arguments. Otherwise type `run_query.ps1 -?` to gat the list of arguments:   
-![alt text](visuals/cloudshellargs.png "Script arguments")    
+![](visuals/cloudshellargs.png "Script arguments")    
 
 Cloud Shell can be configured to access Synapse over a virtual network. This requires you to create a new Cloud Shell, as described [here](https://docs.microsoft.com/en-us/azure/cloud-shell/private-vnet#configuring-cloud-shell-to-use-a-virtual-network). If not, specify the `-OpenFirewall` argument. Assuming you have the permission to do so, it will create an allow rule for the public IP address you're currently connecting from.
 
 Instead of wriring the result to the terminal (which would dramatically slow down performance at best, and worst case not work at all), downloaded records are saved to a temporary file.
-![alt text](visuals/cloudshell.png "Cloud Shell Query execution result")
+![](visuals/cloudshell.png "Cloud Shell Query execution result")
 
 You can of course run this anywhere you like, provided you have PowerShell and sqlcmd installed.
 
 ### Timer Azure Function
 For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. 
-<img src="visuals/function.png" width="75%" align="middle">
+<p align="center"><img src="visuals/function.png" width="75%" align="middle"></p>
 
 This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
-Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, either run `deploy_function.ps1` or use the function tools to publish the Azure Function.     
+Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, either run `deploy_function.ps1` or use the function tools to publish the Azure Function:     
 
-<img src="visuals/functiontools.png" width="50%">
+<p align="center"><img src="visuals/functiontools.png" width="40%"></p>
  
 This function retrieves all requested rows from Synapase Analytics, and then discards them:
 ```
@@ -139,7 +141,7 @@ using (SqlDataReader reader = cmd.EndExecuteReader(result))
 ```
 
 In addition to the function, Terraform also provisions Application Insights, and an alert rule with action group. This is an example alert email message:
-![alt text](visuals/alertmessage.png "Alert email message")   
+![](visuals/alertmessage.png "Alert email message")   
 
 This alert is defined by a Kusto query:
 ```
@@ -154,7 +156,7 @@ AppRequests
 ```
 
 And yields a result similar to the below data:
-![alt text](visuals/loganalyticsresults.png "Log Analytics query results")   
+![](visuals/loganalyticsresults.png "Log Analytics query results")   
 
 ## Clean up
 When you want to destroy resources, run:   
