@@ -67,6 +67,11 @@ variable ssh_public_key {
   default      = "~/.ssh/id_rsa.pub"
 }
 
+variable use_managed_identity {
+  type         = bool
+  default      = false
+}
+
 variable user_name {
   type         = string
   default      = "demoadmin"

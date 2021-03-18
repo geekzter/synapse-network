@@ -2,14 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
-//using System.Threading.Tasks;
 using Microsoft.ApplicationInsights;
 using Microsoft.ApplicationInsights.DataContracts;
 using Microsoft.ApplicationInsights.Extensibility;
-//using Microsoft.AspNetCore.Http;
-//using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Azure.WebJobs;
-//using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
 
@@ -43,7 +40,7 @@ namespace EW.Sql.Function
             int rowsRetrieved = 0;
 
             try {
-                using (SqlConnection conn = new SqlConnection(GetConnectionString()))
+                using (SqlConnection conn = CreateConnection())
                 {
                     conn.Open();
                     log.LogInformation("Connection opened: {0}",stopwatch.Elapsed.ToString(TimerFormat));
@@ -99,22 +96,19 @@ namespace EW.Sql.Function
             log.LogInformation(responseMessage);
         }
 
-        private static string GetConnectionString()
+        private static SqlConnection CreateConnection()
         {
-            return Environment.GetEnvironmentVariable("SYNAPSE_CONNECTION_STRING");
-        }
+            SqlConnection connection = new SqlConnection(GetConnectionString());
 
-        private static int GetRowCount(ILogger log)
-        {
-            var rawValue = Environment.GetEnvironmentVariable("SYNAPSE_ROW_COUNT");
-
-            int rowCount;
-            if (Int32.TryParse(rawValue, out rowCount)) {
-                return rowCount;
-            } else {
-                log.LogWarning("SYNAPSE_ROW_COUNT not set to a valid value, assuming value '100'");
-                return 100;
+            // Retrieve User Assigned Identity
+            string clientId = Environment.GetEnvironmentVariable("APP_CLIENT_ID");
+            if (!String.IsNullOrEmpty(clientId)) {
+                AzureServiceTokenProvider tokenProvider = new AzureServiceTokenProvider("RunAs=App;AppId=" + clientId);
+                // Get AAD token when using SQL Database
+                connection.AccessToken = tokenProvider.GetAccessTokenAsync("https://database.windows.net/").Result;
             }
+
+            return connection;
         }
 
         private static SqlCommand CreateQueryCommand(SqlConnection connection, ILogger log, int rowCount)
@@ -140,5 +134,22 @@ namespace EW.Sql.Function
             return result;
         }
 
+        private static string GetConnectionString()
+        {
+            return Environment.GetEnvironmentVariable("SYNAPSE_CONNECTION_STRING");
+        }
+
+        private static int GetRowCount(ILogger log)
+        {
+            var rawValue = Environment.GetEnvironmentVariable("SYNAPSE_ROW_COUNT");
+
+            int rowCount;
+            if (Int32.TryParse(rawValue, out rowCount)) {
+                return rowCount;
+            } else {
+                log.LogWarning("SYNAPSE_ROW_COUNT not set to a valid value, assuming value '100'");
+                return 100;
+            }
+        }
     }
 }

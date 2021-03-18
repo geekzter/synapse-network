@@ -17,11 +17,16 @@ try {
     Push-Location $tfdirectory
     
     $functionName = (GetTerraformOutput "function_name")  
+    if (!($functionName)) {
+        Write-Warning "Azure Function not found, has infrastructure been provisioned?"
+        exit
+    }
 
     $functionDirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "functions")
     Push-Location $functionDirectory
 
-    func azure functionapp publish $functionName -b local --list-included-files
+    # func azure functionapp publish $functionName -b local --list-included-files
+    func azure functionapp publish $functionName 
     Pop-Location
 } finally {
     Pop-Location

@@ -15,6 +15,10 @@ variable client_ip_prefixes {
   default      = []
 }
 
+variable grant_database_access {
+  type         = bool
+}
+
 variable log_analytics_workspace_resource_id {}
 
 variable region {
@@ -30,11 +34,11 @@ variable resource_group_name {
   type         = string
 }
 
+variable user_assigned_identity_name {}
 variable user_name {
   type         = string
   default      = "sqladmin"
 }
-
 variable user_password {
   type         = string
 }

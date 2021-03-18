@@ -5,6 +5,9 @@ variable appinsights_instrumentation_key {}
 variable configure_egress {
   type = bool
 }
+
+variable connection_string{}
+
 variable egress_subnet_id {}
 
 variable location {}
@@ -28,6 +31,7 @@ variable suffix {
   type         = string
 }
 
+variable user_assigned_identity_client_id {}
 variable user_assigned_identity_id {}
 variable user_name {
   type         = string

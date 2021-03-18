@@ -69,6 +69,13 @@ output azure_sql_dwh_private_ip_address {
   value        = var.deploy_synapse ? module.synapse.0.sql_dwh_private_ip_address : null
 }
 
+output connection_string {
+  value        = var.deploy_synapse ? module.synapse.0.connection_string : null
+}
+output connection_string_legacy {
+  value        = var.deploy_synapse ? module.synapse.0.connection_string_legacy : null
+}
+
 output function_name {
   value        = var.deploy_serverless && var.deploy_synapse ? module.serverless.0.function_name : null
 }
@@ -77,9 +84,20 @@ output log_analytics_workspace_id {
   value        = azurerm_log_analytics_workspace.workspace.id
 }
 
-# output logic_app_outbound_ip_prefixes {
-#   value        = var.deploy_serverless ? module.serverless.0.outbound_ip_prefixes : null
-# }
+output managed_identity_id {
+  value        = azurerm_user_assigned_identity.client_identity.id
+}
+output managed_identity_name {
+  value        = azurerm_user_assigned_identity.client_identity.name
+}
+output managed_identity_object_id {
+  description  = "The Object ID / Principal ID of the Service Principal created as User Assigned Identity"
+  value        = azurerm_user_assigned_identity.client_identity.principal_id
+}
+output managed_identity_client_id {
+  description  = "The App ID / Client ID of the Service Principal created as User Assigned Identity"
+  value        = azurerm_user_assigned_identity.client_identity.client_id
+}
 
 output user_name {
   sensitive    = false

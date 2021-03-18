@@ -4,11 +4,12 @@ data azurerm_resource_group rg {
 
 locals {
   app_service_settings         = {
+    APP_CLIENT_ID              = var.user_assigned_identity_client_id
     APPINSIGHTS_INSTRUMENTATIONKEY = var.appinsights_instrumentation_key
     APPLICATIONINSIGHTS_CONNECTION_STRING = "InstrumentationKey=${var.appinsights_instrumentation_key}"
     # FUNCTIONS_EXTENSION_VERSION = "~3"
     FUNCTIONS_WORKER_RUNTIME   = "dotnet"
-    SYNAPSE_CONNECTION_STRING  = local.sql_connection_string
+    SYNAPSE_CONNECTION_STRING  = var.connection_string
     SYNAPSE_ROW_COUNT          = var.row_count
     WEBSITE_CONTENTSHARE       = "${var.resource_group_name}-top-test-content"
     WEBSITE_CONTENTAZUREFILECONNECTIONSTRING = "DefaultEndpointsProtocol=https;AccountName=${azurerm_storage_account.functions.name};AccountKey=${azurerm_storage_account.functions.primary_access_key};EndpointSuffix=core.windows.net"
@@ -16,7 +17,6 @@ locals {
     WEBSITE_VNET_ROUTE_ALL     = var.configure_egress ? "1" : null # Force all egress via specified subnet
     # WEBSITE_RUN_FROM_PACKAGE   = 1
   }
-  sql_connection_string        = "Server=tcp:${var.sql_dwh_fqdn},1433;Initial Catalog=${var.sql_dwh_pool};Persist Security Info=False;User ID=${var.user_name};Password=${var.user_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
 }
 
 resource azurerm_storage_account functions {
