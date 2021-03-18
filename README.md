@@ -1,6 +1,7 @@
 # Testing Synapse Analytics Network Performance
 
-This repo can be used to demonstrate performance of connectivity between various clients and Synapse in Azure. Synapse Analytics (formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
+This repo can be used to demonstrate performance of connectivity between various clients and Synapse in Azure. Queries are executed from these clients to simulate 'real world' performance experienced by users.
+Synapse Analytics (formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
 
 
 <br/>
@@ -112,9 +113,12 @@ Instead of wriring the result to the terminal (which would dramatically slow dow
 You can of course run this anywhere you like, provided you have PowerShell and sqlcmd installed.
 
 ### Timer Azure Function
-For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, run `deploy_function.ps1` to publish the Azure Function. This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
-
-![alt text](visuals/function.png "Alert email message")   
+For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. 
+![alt text](visuals/function.png)  
+This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
+Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, either run `deploy_function.ps1` or use the function tools to publish the Azure Function. 
+![alt text](visuals/functiontools.png)    
+ 
 This function retrieves all requested rows from Synapase Analytics, and then discards them:
 ```
 using (SqlDataReader reader = cmd.EndExecuteReader(result))
@@ -148,7 +152,7 @@ AppRequests
 ```
 
 And yields a result similar to the below data:
-![alt text](visuals/loganalyticsresults.png "Alert email message")   
+![alt text](visuals/loganalyticsresults.png "Log Analytics query results")   
 
 ## Clean up
 When you want to destroy resources, run:   
