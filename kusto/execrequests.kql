@@ -1,0 +1,4 @@
+AzureDiagnostics 
+| where Category == "ExecRequests" //and Command_s contains "Trip" 
+| project Command_s, OperationId=replace("-","",Label_g)
+

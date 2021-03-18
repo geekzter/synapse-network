@@ -1,6 +1,7 @@
 # Testing Synapse Analytics Network Performance
 
-This repo can be used to demonstrate performance of connectivity between various clients and Synapse in Azure. Synapse Analytics (formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
+This repo can be used to demonstrate performance of connectivity between various clients and Synapse in Azure. Queries are executed from these clients to simulate 'real world' performance experienced by users.
+Synapse Analytics (formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
 
 
 <br/>
@@ -8,6 +9,7 @@ This repo can be used to demonstrate performance of connectivity between various
 ## Pre-requisites
 - To get started you need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS, [Homebrew](https://github.com/hashicorp/homebrew-tap) on macOS or [chocolatey](https://chocolatey.org/packages/terraform) on Windows)
 - A SSH public key (default location is ~/.ssh/id_rsa.pub). If you choose to provision AWS resourcses (see below), this key is also used to create secrets for EC2 instances, [which requires](https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-key-pairs.html) the private key to be in PEM format
+- To build & deploy the Azure Function, you'll need the [.NET 3.1 SDK](https://dotnet.microsoft.com/download/dotnet/3.1) and the [Azure Function Tools](https://www.npmjs.com/package/azure-functions-core-tools)
 - There are some scripts to make life easier, you'll need [PowerShell](https://github.com/PowerShell/PowerShell#get-powershell) to execute those    
 
 If you create a GitHub [Codespace](https://github.com/features/codespaces) for this repository, you'll get the above set up - including a generated SSH key pair.
@@ -60,7 +62,7 @@ The infrastructure provisioned can support various test scenarios, and therefore
 
 
 ### From Azure VM
-`deploy_azure_client` should be set to `true` when provisioning infrastructure. Once provisioned, you can log on the the Azure VM. The username is `demoadmin`. Use configuration data from Terraform to get the password and public IP address:
+Terraform input variable`deploy_azure_client` should be set to `true` when provisioning infrastructure. Once provisioned, you can log on the the Azure VM. The username is `demoadmin`. Use configuration data from Terraform to get the password and public IP address:
 ```
 terraform output user_name
 terraform output user_password
@@ -77,10 +79,12 @@ select top 100000000 * from dbo.Trip
 ```
 This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam). Using the public endpoint instead of S2S VPN and private endpoint yields the same results, both paths are taking a direct route.  
 
-![alt text](visuals/100m.png "SQL Server Management Studio")
+<p align="center">
+<img src="visuals/100m.png">
+</p>
 
 ### From AWS VM
-`deploy_aws_client` should be set to `true` when provisioning infrastructure.
+Terraform input variable`deploy_aws_client` should be set to `true` when provisioning infrastructure.
 You will need an AWS account. There are [multiple ways](https://registry.terraform.io/providers/hashicorp/aws/latest/docs) to configure the AWS Terraform provider, I tested with static credentials:
 ```
 AWS_ACCESS_KEY_ID="AAAAAAAAAAAAAAAAAAAA"
@@ -88,7 +92,7 @@ AWS_DEFAULT_REGION="eu-west-1"
 AWS_SECRET_ACCESS_KEY="xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
 For connectivity Site-to-Site VPN ([aws-azure-vpn](/terraform/modules/aws-azure-vpn) module) is used, which implements the AWS - Azure S2S VPN described in this [excellent blog post](https://deployeveryday.com/2020/04/13/vpn-aws-azure-terraform.html) by [Jonatas Baldin](https://deployeveryday.com/about.html).
-![alt text](visuals/s2svpn.png "Infrastructure")    
+![](visuals/s2svpn.png "Infrastructure")    
 
 The approach is simular to using the Azure VM, these output variables are relevant to set up a RDP connection:
 ```
@@ -101,17 +105,25 @@ Instead of DNS, in this scenario [automation](https://docs.aws.amazon.com/AWSEC2
 In this scenario, you can run the [run_query.ps1](scripts/run_query.ps1) script that uses the [sqlcmd](https://docs.microsoft.com/en-us/sql/tools/sqlcmd-utility?view=azure-sqldw-latest) tool to execute a query against Synapse Analytics.
 
 If you provisioned Terraform from the same directory, or have a backend set up, there are no mandatory arguments. Otherwise type `run_query.ps1 -?` to gat the list of arguments:   
-![alt text](visuals/cloudshellargs.png "Script arguments")    
+![](visuals/cloudshellargs.png "Script arguments")    
 
 Cloud Shell can be configured to access Synapse over a virtual network. This requires you to create a new Cloud Shell, as described [here](https://docs.microsoft.com/en-us/azure/cloud-shell/private-vnet#configuring-cloud-shell-to-use-a-virtual-network). If not, specify the `-OpenFirewall` argument. Assuming you have the permission to do so, it will create an allow rule for the public IP address you're currently connecting from.
 
 Instead of wriring the result to the terminal (which would dramatically slow down performance at best, and worst case not work at all), downloaded records are saved to a temporary file.
-![alt text](visuals/cloudshell.png "Cloud Shell Query execution result")
+![](visuals/cloudshell.png "Cloud Shell Query execution result")
 
 You can of course run this anywhere you like, provided you have PowerShell and sqlcmd installed.
 
-### Scheduled Azure Function
-For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger. This function retrieves data from Synapase, and then discards it:
+### Timer Azure Function
+For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. 
+<p align="center"><img src="visuals/function.png" width="75%" align="middle"></p>
+
+This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
+Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, either run `deploy_function.ps1` or use the function tools to publish the Azure Function:     
+
+<p align="center"><img src="visuals/functiontools.png" width="40%"></p>
+ 
+This function retrieves all requested rows from Synapase Analytics, and then discards them:
 ```
 using (SqlDataReader reader = cmd.EndExecuteReader(result))
 {
@@ -129,21 +141,22 @@ using (SqlDataReader reader = cmd.EndExecuteReader(result))
 ```
 
 In addition to the function, Terraform also provisions Application Insights, and an alert rule with action group. This is an example alert email message:
-![alt text](visuals/alertmessage.png "Alert email message")   
+![](visuals/alertmessage.png "Alert email message")   
 
 This alert is defined by a Kusto query:
 ```
-requests
-| join (traces) on operation_Id
-| where message == "RunResult"
-| project timestamp, operation_Name, success, resultCode, duration, rows_requested=customDimensions1['RowsRequested'], rows_retrieved=customDimensions1['RowsRetrieved'], cloud_RoleName
-| where timestamp > ago(30d)
-| where cloud_RoleName contains_cs 'synapse' and operation_Name =~ 'GetRows' and duration > 40000
-| order by timestamp desc
+AppRequests
+| join (AppTraces
+    | where Message == "RunResult"
+    | project OperationId, RowsRequested=Properties['RowsRequested'], RowsRetrieved=Properties['RowsRetrieved']) on OperationId
+| project TimeGenerated, OperationId, OperationName, Success, ResultCode, DurationMs, RowsRequested, RowsRetrieved, AppRoleName
+| where TimeGenerated > ago(30d)
+| where AppRoleName contains_cs 'synapse' and OperationName =~ 'GetRows' and DurationMs > 40000
+| order by TimeGenerated desc
 ```
 
-And yields a reult similar to the below data:
-![alt text](visuals/loganalyticsresults.png "Alert email message")   
+And yields a result similar to the below data:
+![](visuals/loganalyticsresults.png "Log Analytics query results")   
 
 ## Clean up
 When you want to destroy resources, run:   

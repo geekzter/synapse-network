@@ -21,7 +21,7 @@ try {
     $functionDirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "functions")
     Push-Location $functionDirectory
 
-    func azure functionapp fetch-app-settings $functionName
+    func azure functionapp publish $functionName -b local --list-included-files
     Pop-Location
 } finally {
     Pop-Location

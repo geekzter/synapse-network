@@ -42,6 +42,7 @@ module azure_client {
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
   sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
   subnet_id                    = module.azure_network[0].azure_vm_subnet_id
+  user_assigned_identity_id    = azurerm_user_assigned_identity.client_identity.id
   user_name                    = var.user_name
   user_password                = local.password
 
@@ -62,6 +63,7 @@ module serverless {
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
   suffix                       = local.suffix
+  user_assigned_identity_id    = azurerm_user_assigned_identity.client_identity.id
   user_name                    = var.user_name
   user_password                = local.password
 
@@ -119,6 +121,8 @@ module synapse {
   source                       = "./modules/synapse"
   region                       = var.azure_region
   resource_group_name          = azurerm_resource_group.synapse.name
+  admin_object_id              = data.azurerm_client_config.current.object_id
+  # admin_object_id              = azurerm_user_assigned_identity client_identity.principal_id
   # client_ip_prefixes           = local.concat_prefix_list
   # client_ip_prefixes           = var.deploy_serverless ? slice(concat(module.serverless.0.outbound_ip_prefixes,local.fixed_prefix_list),0,length(local.fixed_prefix_list)) : local.fixed_prefix_list
   client_ip_prefixes           = [local.publicprefix]

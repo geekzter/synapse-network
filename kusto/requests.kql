@@ -1,7 +1,11 @@
-requests
-| join (traces) on operation_Id
-| where message == "RunResult"
-| project timestamp, operation_Name, success, resultCode, duration, rows_requested=customDimensions1['RowsRequested'], rows_retrieved=customDimensions1['RowsRetrieved'], cloud_RoleName
-| where timestamp > ago(30d)
-| where cloud_RoleName contains_cs 'synapse' and operation_Name =~ 'GetRows'
-| order by timestamp desc
+AppRequests
+| join (AppTraces
+    | where Message == "RunResult"
+    | project OperationId, RowsRequested=Properties['RowsRequested'], RowsRetrieved=Properties['RowsRetrieved']) on OperationId
+//| join (AzureDiagnostics 
+//    | where Category == "ExecRequests" and Command_s contains "Trip" 
+//    | project OperationId=replace("-","",Label_g)) on OperationId
+| project TimeGenerated, OperationId, OperationName, Success, ResultCode, DurationMs, RowsRequested, RowsRetrieved, AppRoleName
+| where TimeGenerated > ago(30d)
+| where AppRoleName contains_cs 'synapse' and OperationName =~ 'GetRows'
+| order by TimeGenerated desc
