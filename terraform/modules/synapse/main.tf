@@ -173,7 +173,7 @@ resource azurerm_private_dns_zone_virtual_network_link sql {
 }
 
 resource azurerm_private_endpoint sql_dwh_endpoint {
-  name                         = "${azurerm_sql_database.sql_dwh.name}-endpoint"
+  name                         = "${azurerm_sql_database.sql_dwh.name}-${var.region}-endpoint"
   resource_group_name          = var.resource_group_name
   location                     = var.region
   
@@ -186,7 +186,7 @@ resource azurerm_private_endpoint sql_dwh_endpoint {
 
   private_service_connection {
     is_manual_connection       = false
-    name                       = "${azurerm_sql_server.sql_dwh.name}-endpoint-connection"
+    name                       = "${azurerm_sql_server.sql_dwh.name}-${var.region}-endpoint-connection"
     private_connection_resource_id = azurerm_sql_server.sql_dwh.id
     subresource_names          = ["sqlServer"]
   }

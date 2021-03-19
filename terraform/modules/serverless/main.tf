@@ -20,14 +20,15 @@ locals {
 }
 
 resource azurerm_storage_account functions {
-  name                         = "${lower(substr(replace(var.resource_group_name,"/a|e|i|o|u|y|-/",""),0,17))}fnc${var.suffix}"
+  # name                         = "${lower(substr(replace(var.resource_group_name,"/a|e|i|o|u|y|-/",""),0,17))}fnc${var.suffix}"
+  name                         = "syn${lower(substr(replace(var.location,"/a|e|i|o|u|y|-/",""),0,13))}func${var.suffix}"
   resource_group_name          = var.resource_group_name
   location                     = var.location
   account_tier                 = "Standard"
   account_replication_type     = "LRS"
 }
 resource azurerm_app_service_plan functions {
-  name                         = "${var.resource_group_name}-functions"
+  name                         = "${var.resource_group_name}-${var.location}-functions"
   resource_group_name          = var.resource_group_name
   location                     = var.location
   kind                         = "FunctionApp"
@@ -49,7 +50,7 @@ resource azurerm_app_service_plan functions {
   tags                         = data.azurerm_resource_group.rg.tags
 }
 resource azurerm_function_app top_test {
-  name                         = "${var.resource_group_name}-top-test"
+  name                         = "${azurerm_app_service_plan.functions.name}-top-test"
   resource_group_name          = var.resource_group_name
   location                     = var.location
   app_service_plan_id          = azurerm_app_service_plan.functions.id
@@ -91,7 +92,6 @@ resource azurerm_monitor_scheduled_query_rules_alert top_test_alert {
     action_group               = [var.monitor_action_group_id]
     email_subject              = "Synapse test query is taking longer than expected"
   }
-  # data_source_id               = var.appinsights_id
   data_source_id               = var.log_analytics_workspace_resource_id
   description                  = "Alert when # low performing queries goes over threshold"
   enabled                      = false
@@ -127,7 +127,7 @@ resource azurerm_monitor_diagnostic_setting function_logs {
 }
 
 resource azurerm_logic_app_workflow workflow {
-  name                         = "${var.resource_group_name}-workflow"
+  name                         = "${var.resource_group_name}-${var.location}-workflow"
   resource_group_name          = var.resource_group_name
   location                     = var.location
 

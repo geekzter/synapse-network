@@ -65,7 +65,7 @@ resource azurerm_user_assigned_identity client_identity {
 
 
 resource azurerm_resource_group synapse {
-  name                         = "synapse-network-performance-${terraform.workspace}-${local.suffix}"
+  name                         = "synapse-network-${terraform.workspace}-${local.suffix}"
   location                     = var.azure_region
 
   tags                         = local.tags

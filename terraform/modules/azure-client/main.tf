@@ -5,7 +5,7 @@ data azurerm_resource_group rg {
 data azurerm_client_config current {}
 
 locals {
-  vm_name                      = "${data.azurerm_resource_group.rg.name}-vm"
+  vm_name                      = "${data.azurerm_resource_group.rg.name}-${data.azurerm_resource_group.rg.location}-vm"
 }
 
 resource random_string pip_domain_name_label {
@@ -89,7 +89,8 @@ resource azurerm_storage_blob setup_windows_vm_ps1 {
 
 resource azurerm_windows_virtual_machine vm {
   name                         = local.vm_name
-  computer_name                = "azsynapseclient"
+  computer_name                = lower(substr(replace("synapseclient${data.azurerm_resource_group.rg.location}","/a|e|i|o|u|y|-/",""),0,15))
+  # computer_name                = "azsynapseclient"
   location                     = data.azurerm_resource_group.rg.location
   resource_group_name          = data.azurerm_resource_group.rg.name
   network_interface_ids        = [azurerm_network_interface.nic.id]
@@ -150,5 +151,5 @@ resource local_file rdp_file {
     host                       = azurerm_public_ip.pip.ip_address
     username                   = var.user_name
   })
-  filename                     = "${path.root}/../data/${terraform.workspace}/azure-client.rdp"
+  filename                     = "${path.root}/../data/${terraform.workspace}/azure-client-${data.azurerm_resource_group.rg.location}.rdp"
 }

@@ -3,7 +3,7 @@ data azurerm_resource_group rg {
 }
 
 resource azurerm_virtual_network vnet {
-  name                         = "${data.azurerm_resource_group.rg.name}-network"
+  name                         = "${data.azurerm_resource_group.rg.name}-${data.azurerm_resource_group.rg.location}-network"
   location                     = data.azurerm_resource_group.rg.location
   resource_group_name          = data.azurerm_resource_group.rg.name
   address_space                = ["10.0.0.0/16"]
@@ -38,7 +38,7 @@ resource azurerm_subnet app_service {
 }
 
 resource azurerm_nat_gateway egress {
-  name                         = "${azurerm_virtual_network.vnet.name}-natgw"
+  name                         = "${azurerm_virtual_network.vnet.name}-gw"
   location                     = data.azurerm_resource_group.rg.location
   resource_group_name          = data.azurerm_resource_group.rg.name
   sku_name                     = "Standard"
