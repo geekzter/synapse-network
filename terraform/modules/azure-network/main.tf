@@ -6,16 +6,16 @@ resource azurerm_virtual_network vnet {
   name                         = "${data.azurerm_resource_group.rg.name}-${data.azurerm_resource_group.rg.location}-network"
   location                     = data.azurerm_resource_group.rg.location
   resource_group_name          = data.azurerm_resource_group.rg.name
-  address_space                = ["10.0.0.0/16"]
+  address_space                = [var.address_space]
 
   tags                         = data.azurerm_resource_group.rg.tags
 }
 
 resource azurerm_subnet vm_subnet {
-  name                         = "vm_subnet"
+  name                         = "VmSubnet"
   resource_group_name          = data.azurerm_resource_group.rg.name
   virtual_network_name         = azurerm_virtual_network.vnet.name
-  address_prefixes             = ["10.0.1.0/24"]
+  address_prefixes             = [cidrsubnet(azurerm_virtual_network.vnet.address_space[0],8,1)]
   enforce_private_link_endpoint_network_policies = true
 }
 
@@ -23,7 +23,7 @@ resource azurerm_subnet app_service {
   name                         = "AppService"
   resource_group_name          = data.azurerm_resource_group.rg.name
   virtual_network_name         = azurerm_virtual_network.vnet.name
-  address_prefixes             = ["10.0.3.0/24"]
+  address_prefixes             = [cidrsubnet(azurerm_virtual_network.vnet.address_space[0],11,0)]
 
   delegation {
     name                       = "appservice_delegation"
@@ -69,4 +69,33 @@ resource azurerm_subnet_nat_gateway_association vm_subnet {
   nat_gateway_id               = azurerm_nat_gateway.egress.id
 
   depends_on                   = [azurerm_nat_gateway_public_ip_association.egress]
+}
+
+# https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-peering-gateway-transit#resource-manager-to-resource-manager-peering-with-gateway-transit
+resource azurerm_virtual_network_peering spoke_to_hub {
+  name                         = "${azurerm_virtual_network.vnet.name}-spoke2hub"
+  resource_group_name          = data.azurerm_resource_group.rg.name
+  virtual_network_name         = azurerm_virtual_network.vnet.name
+  remote_virtual_network_id    = var.peer_virtual_network_id
+
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = false
+  allow_virtual_network_access = true
+  use_remote_gateways          = false
+
+  count                        = var.peer_virtual_network_id != null ? 1 : 0
+  depends_on                   = [azurerm_virtual_network_peering.hub_to_spoke]
+}
+resource azurerm_virtual_network_peering hub_to_spoke {
+  name                         = "${azurerm_virtual_network.vnet.name}-hub2spoke"
+  resource_group_name          = data.azurerm_resource_group.rg.name
+  virtual_network_name         = element(split("/",var.peer_virtual_network_id),length(split("/",var.peer_virtual_network_id))-1)
+  remote_virtual_network_id    = azurerm_virtual_network.vnet.id
+
+  allow_forwarded_traffic      = true
+  allow_gateway_transit        = false
+  allow_virtual_network_access = true
+  use_remote_gateways          = false
+
+  count                        = var.peer_virtual_network_id != null ? 1 : 0
 }

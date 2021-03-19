@@ -1,7 +1,8 @@
 module azure_network {
   source                       = "./modules/azure-network"
   resource_group_name          = azurerm_resource_group.synapse.name
-
+  address_space                = "10.0.0.0/16"
+  
   count                        = var.deploy_network ? 1 : 0
 }
 
