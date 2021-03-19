@@ -15,6 +15,9 @@ namespace EW.Sql.Function
     public class GetRows
     {
         private const string TimerFormat = @"hh\:mm\:ss";
+        private const string ConnectionStringVariable = "SYNAPSE_CONNECTION_STRING";
+        private const string RowCountVariable = "SYNAPSE_ROW_COUNT";
+        private const string ClientIDVariable = "APP_CLIENT_ID";
         private readonly TelemetryClient telemetryClient;
 
         /// Using dependency injection will guarantee that you use the same configuration for telemetry collected automatically and manually.
@@ -101,7 +104,7 @@ namespace EW.Sql.Function
             SqlConnection connection = new SqlConnection(GetConnectionString());
 
             // Retrieve User Assigned Identity
-            string clientId = Environment.GetEnvironmentVariable("APP_CLIENT_ID");
+            string clientId = Environment.GetEnvironmentVariable(ClientIDVariable);
             if (!String.IsNullOrEmpty(clientId)) {
                 AzureServiceTokenProvider tokenProvider = new AzureServiceTokenProvider("RunAs=App;AppId=" + clientId);
                 // Get AAD token when using SQL Database
@@ -115,7 +118,6 @@ namespace EW.Sql.Function
         {
             string label = System.Diagnostics.Activity.Current.TraceId.ToString();
             var query = $"select top {rowCount} * from dbo.Trip option (label = '{label}')";
-            log.LogInformation(query);
             SqlCommand command = new SqlCommand(query, connection);
             log.LogInformation(command.CommandText);
 
@@ -136,12 +138,18 @@ namespace EW.Sql.Function
 
         private static string GetConnectionString()
         {
-            return Environment.GetEnvironmentVariable("SYNAPSE_CONNECTION_STRING");
+
+            string connectionString = Environment.GetEnvironmentVariable(ConnectionStringVariable);
+            if (String.IsNullOrEmpty(connectionString)) {
+                throw new Exception(String.Format("Environment variable {0} not set",ConnectionStringVariable));
+            }
+
+            return connectionString;
         }
 
         private static int GetRowCount(ILogger log)
         {
-            var rawValue = Environment.GetEnvironmentVariable("SYNAPSE_ROW_COUNT");
+            var rawValue = Environment.GetEnvironmentVariable(RowCountVariable);
 
             int rowCount;
             if (Int32.TryParse(rawValue, out rowCount)) {
