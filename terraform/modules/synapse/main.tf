@@ -154,24 +154,6 @@ resource null_resource grant_sql_access {
   depends_on                   = [azurerm_sql_active_directory_administrator.dba]
 }
 
-resource azurerm_private_dns_zone sql_dns_zone {
-  name                         = "privatelink.database.windows.net"
-  resource_group_name          = var.resource_group_name
-
-  tags                         = data.azurerm_resource_group.rg.tags
-
-  count                        = var.create_network_resources ? 1 : 0
-}
-
-resource azurerm_private_dns_zone_virtual_network_link sql {
-  name                         = "${local.virtual_network_name}-sql-link"
-  resource_group_name          = var.resource_group_name
-  private_dns_zone_name        = azurerm_private_dns_zone.sql_dns_zone[0].name
-  virtual_network_id           = local.virtual_network_id
-
-  count                        = var.create_network_resources ? 1 : 0
-}
-
 resource azurerm_private_endpoint sql_dwh_endpoint {
   name                         = "${azurerm_sql_database.sql_dwh.name}-${var.region}-endpoint"
   resource_group_name          = var.resource_group_name
@@ -180,8 +162,8 @@ resource azurerm_private_endpoint sql_dwh_endpoint {
   subnet_id                    = var.subnet_id
 
   private_dns_zone_group {
-    name                       = azurerm_private_dns_zone.sql_dns_zone[0].name
-    private_dns_zone_ids       = [azurerm_private_dns_zone.sql_dns_zone[0].id]
+    name                       = split("/",var.private_dns_zone_id)[8]
+    private_dns_zone_ids       = [var.private_dns_zone_id]
   }
 
   private_service_connection {

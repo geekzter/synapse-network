@@ -2,8 +2,22 @@ module azure_network {
   source                       = "./modules/azure-network"
   resource_group_name          = azurerm_resource_group.synapse.name
   address_space                = "10.0.0.0/16"
+  location                     = azurerm_resource_group.synapse.location
+  private_dns_zone_id          = azurerm_private_dns_zone.sql_dns_zone.id
   
   count                        = var.deploy_network ? 1 : 0
+}
+
+module azure_network_alternate_region {
+  source                       = "./modules/azure-network"
+  resource_group_name          = azurerm_resource_group.synapse.name
+  address_space                = "10.1.0.0/16"
+  create_peering               = true
+  location                     = var.azure_alternate_region 
+  peer_virtual_network_id      = module.azure_network[0].virtual_network_id
+  private_dns_zone_id          = azurerm_private_dns_zone.sql_dns_zone.id
+  
+  count                        = var.deploy_network && var.azure_alternate_region != null ? 1 : 0
 }
 
 # Credits: https://deployeveryday.com/2020/04/13/vpn-aws-azure-terraform.html
@@ -11,8 +25,8 @@ module aws_azure_vpn {
   source                       = "./modules/aws-azure-vpn"
   aws_key_name                 = aws_key_pair.pem_key[0].key_name
   azure_resource_group_name    = azurerm_resource_group.synapse.name
-  azure_virtual_network_name   = module.azure_network[0].azure_virtual_network_name
-  azure_vm_subnet_id           = module.azure_network[0].azure_vm_subnet_id
+  azure_virtual_network_name   = module.azure_network[0].virtual_network_name
+  azure_vm_subnet_id           = module.azure_network[0].vm_subnet_id
   user_name                    = var.user_name
   user_password                = local.password
   ssh_private_key              = var.ssh_private_key
@@ -37,12 +51,13 @@ module aws_client {
 
 module azure_client {
   source                       = "./modules/azure-client"
-  scripts_storage_container_id = azurerm_storage_container.scripts.id
   resource_group_name          = azurerm_resource_group.synapse.name
+  location                     = azurerm_resource_group.synapse.location
+  scripts_storage_container_id = azurerm_storage_container.scripts.id
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
   sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
-  subnet_id                    = module.azure_network[0].azure_vm_subnet_id
+  subnet_id                    = module.azure_network[0].vm_subnet_id
   user_assigned_identity_id    = azurerm_user_assigned_identity.client_identity.id
   user_name                    = var.user_name
   user_password                = local.password
@@ -56,7 +71,7 @@ module serverless {
   appinsights_instrumentation_key = azurerm_application_insights.insights.instrumentation_key
   configure_egress             = true
   connection_string            = var.deploy_synapse ? module.synapse[0].connection_string : ""
-  egress_subnet_id             = var.deploy_network ? module.azure_network[0].azure_app_service_subnet_id : null
+  egress_subnet_id             = var.deploy_network ? module.azure_network[0].app_service_subnet_id : null
   location                     = var.azure_region
   log_analytics_workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
   monitor_action_group_id      = azurerm_monitor_action_group.arm_roles.id
@@ -84,11 +99,12 @@ module synapse {
   dwu                          = var.azure_sql_dwh_dwu
   grant_database_access        = var.use_managed_identity
   log_analytics_workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
+  private_dns_zone_id          = azurerm_private_dns_zone.sql_dns_zone.id
   user_assigned_identity_name  = azurerm_user_assigned_identity.client_identity.name
   user_name                    = var.user_name
   user_password                = local.password
   create_network_resources     = var.deploy_network
-  subnet_id                    = var.deploy_network ? module.azure_network[0].azure_vm_subnet_id : null
+  subnet_id                    = var.deploy_network ? module.azure_network[0].vm_subnet_id : null
 
   count                        = var.deploy_synapse ? 1 : 0
 }

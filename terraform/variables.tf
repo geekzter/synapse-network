@@ -8,6 +8,11 @@ variable azure_region {
   default      = "westeurope" # Amsterdam
 }
 
+variable azure_alternate_region {
+  type         = string
+  default      = null
+}
+
 variable azure_sql_dwh_dwu {
   type         = string
   default      = "DW100c"

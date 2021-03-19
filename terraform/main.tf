@@ -94,3 +94,10 @@ resource azurerm_storage_container scripts {
   storage_account_name         = azurerm_storage_account.automation_storage.name
   container_access_type        = "container"
 }
+
+resource azurerm_private_dns_zone sql_dns_zone {
+  name                         = "privatelink.database.windows.net"
+  resource_group_name          = azurerm_resource_group.synapse.name
+
+  tags                         = azurerm_resource_group.synapse.tags
+}

@@ -21,6 +21,8 @@ variable grant_database_access {
 
 variable log_analytics_workspace_resource_id {}
 
+variable private_dns_zone_id {}
+
 variable region {
   type         = string
 }

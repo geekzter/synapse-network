@@ -3,8 +3,8 @@ data azurerm_resource_group rg {
 }
 
 resource azurerm_virtual_network vnet {
-  name                         = "${data.azurerm_resource_group.rg.name}-${data.azurerm_resource_group.rg.location}-network"
-  location                     = data.azurerm_resource_group.rg.location
+  name                         = "${data.azurerm_resource_group.rg.name}-${var.location}-network"
+  location                     = var.location
   resource_group_name          = data.azurerm_resource_group.rg.name
   address_space                = [var.address_space]
 
@@ -39,7 +39,7 @@ resource azurerm_subnet app_service {
 
 resource azurerm_nat_gateway egress {
   name                         = "${azurerm_virtual_network.vnet.name}-gw"
-  location                     = data.azurerm_resource_group.rg.location
+  location                     = var.location
   resource_group_name          = data.azurerm_resource_group.rg.name
   sku_name                     = "Standard"
 
@@ -47,7 +47,7 @@ resource azurerm_nat_gateway egress {
 }
 resource azurerm_public_ip egress {
   name                         = "${azurerm_nat_gateway.egress.name}-ip"
-  location                     = data.azurerm_resource_group.rg.location
+  location                     = var.location
   resource_group_name          = data.azurerm_resource_group.rg.name
   allocation_method            = "Static"
   sku                          = "Standard"
@@ -71,6 +71,13 @@ resource azurerm_subnet_nat_gateway_association vm_subnet {
   depends_on                   = [azurerm_nat_gateway_public_ip_association.egress]
 }
 
+resource azurerm_private_dns_zone_virtual_network_link sql {
+  name                         = "${azurerm_virtual_network.vnet.name}-sql-link"
+  resource_group_name          = data.azurerm_resource_group.rg.name
+  private_dns_zone_name        = split("/",var.private_dns_zone_id)[8]
+  virtual_network_id           = azurerm_virtual_network.vnet.id
+}
+
 # https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-peering-gateway-transit#resource-manager-to-resource-manager-peering-with-gateway-transit
 resource azurerm_virtual_network_peering spoke_to_hub {
   name                         = "${azurerm_virtual_network.vnet.name}-spoke2hub"
@@ -83,7 +90,7 @@ resource azurerm_virtual_network_peering spoke_to_hub {
   allow_virtual_network_access = true
   use_remote_gateways          = false
 
-  count                        = var.peer_virtual_network_id != null ? 1 : 0
+  count                        = var.create_peering ? 1 : 0
   depends_on                   = [azurerm_virtual_network_peering.hub_to_spoke]
 }
 resource azurerm_virtual_network_peering hub_to_spoke {
@@ -97,5 +104,5 @@ resource azurerm_virtual_network_peering hub_to_spoke {
   allow_virtual_network_access = true
   use_remote_gateways          = false
 
-  count                        = var.peer_virtual_network_id != null ? 1 : 0
+  count                        = var.create_peering ? 1 : 0
 }
