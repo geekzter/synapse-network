@@ -75,9 +75,9 @@ terraform output azure_sql_dwh_fqdn
 ```
 The VM will already have SQL Server Management Studio installed, and the Virtual Network is configured to use the Private Endpoint of Synapse Analytics. Within SQL Server Management Studio, run a query e.g.
 ```
-select top 100000000 * from dbo.Trip
+select top 100000000 * from dbo.Trip option (label = 'mylabel')
 ```
-This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam). Using the public endpoint instead of S2S VPN and private endpoint yields the same results, both paths are taking a direct route.  
+This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam). Using the public endpoint instead of S2S VPN and private endpoint yields the same results, both paths are taking a direct route. Specifying a label helps identity this query in [Dynamic Management Views](https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-pdw-exec-requests-transact-sql) .
 
 <p align="center">
 <img src="visuals/100m.png">
