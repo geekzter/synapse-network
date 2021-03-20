@@ -1115,7 +1115,10 @@ stages:
               # Remove resources
               if ($resourceGroupIDs) {
                 Write-Host "Removing resource group(s) `"${resourceGroupIDs}`"..."
-                az resource delete --ids $resourceGroupIDs --verbose
+                &{ # az writes information to stderr
+                  $ErrorActionPreference = 'SilentlyContinue'
+                  az resource delete --ids $resourceGroupIDs --verbose 2>&1
+                }
               } else {
                 Write-Host "Nothing to remove"
               }
