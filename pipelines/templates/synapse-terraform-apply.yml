@@ -357,9 +357,9 @@ stages:
               # List environment variables
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,TF_* | Sort-Object -Property Name
 
-              if (!(az extension list --query "[?name=='application-insights'].name" -o tsv)) {
-                az extension add --name application-insights -y -o none
-              }
+              # if (!(az extension list --query "[?name=='application-insights'].name" -o tsv)) {
+              #   az extension add --name application-insights -y -o none
+              # }
 
               # Run Terraform
               terraform version
@@ -369,8 +369,8 @@ stages:
             failOnStandardError: true
             powerShellIgnoreLASTEXITCODE: false
             workingDirectory: '$(terraformDirectory)'
-          env:
-            AZURE_EXTENSION_USE_DYNAMIC_INSTALL: 'yes_without_prompt'
+          # env:
+          #   AZURE_EXTENSION_USE_DYNAMIC_INSTALL: 'yes_without_prompt'
 
   - ${{ if eq(parameters.reprovision, true) }}:
     # Provision again to test for issue's that only come up when resources already exist 
@@ -1136,6 +1136,7 @@ stages:
 
               # Clean up Terraform state
               terraform version
+              Copy-Item backend.tf.example backend.tf
               terraform init -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP_NAME)" `
                              -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT_NAME)" `
                              -backend-config="container_name=$(TF_STATE_CONTAINER_NAME)"              
