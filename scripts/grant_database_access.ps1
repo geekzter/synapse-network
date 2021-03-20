@@ -26,7 +26,7 @@ try {
         $SqlDatabaseName = (GetTerraformOutput "azure_sql_dwh_pool_name")  
     }
     if (!$SqlServerFQDN) {
-        $SqlServerFQDN = (GetTerraformOutput "azure_sql_dwh_fqdn")  
+        $SqlServerFQDN = (GetTerraformOutput "sql_dwh_fqdn")  
     }
 
     if ([string]::IsNullOrEmpty($SqlDatabaseName)) {

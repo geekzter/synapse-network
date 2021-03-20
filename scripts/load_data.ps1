@@ -71,9 +71,9 @@ try {
         $Private:ErrorActionPreference = "Continue"
 
         # Set only if null
-        $script:ResourceGroup          ??= (GetTerraformOutput "azure_resource_group_name")
-        $script:SqlDatabaseName        ??= (GetTerraformOutput "azure_sql_dwh_pool_name")
-        $script:SqlServerFQDN          ??= (GetTerraformOutput "azure_sql_dwh_fqdn")
+        $script:ResourceGroup          ??= (GetTerraformOutput "resource_group_name")
+        $script:SqlDatabaseName        ??= (GetTerraformOutput "sql_dwh_pool_name")
+        $script:SqlServerFQDN          ??= (GetTerraformOutput "sql_dwh_fqdn")
         $script:SqlPassword            ??= (GetTerraformOutput "user_password")
         $script:SqlUser                ??= (GetTerraformOutput "user_name")
     }

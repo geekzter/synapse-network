@@ -17,7 +17,7 @@ module azure_network_alternate_region {
   peer_virtual_network_id      = module.azure_network[0].virtual_network_id
   private_dns_zone_id          = azurerm_private_dns_zone.sql_dns_zone.id
   
-  count                        = var.deploy_network && var.azure_alternate_region != null ? 1 : 0
+  count                        = var.deploy_network && var.azure_alternate_region != null && var.azure_alternate_region != "" ? 1 : 0
 }
 
 # Credits: https://deployeveryday.com/2020/04/13/vpn-aws-azure-terraform.html
@@ -65,6 +65,22 @@ module azure_client {
   count                        = var.deploy_network && var.deploy_azure_client ? 1 : 0
 }
 
+module azure_client_alternate_region {
+  source                       = "./modules/azure-client"
+  resource_group_name          = azurerm_resource_group.synapse.name
+  location                     = var.azure_alternate_region
+  scripts_storage_container_id = azurerm_storage_container.scripts.id
+  sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
+  sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
+  sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
+  subnet_id                    = module.azure_network_alternate_region[0].vm_subnet_id
+  user_assigned_identity_id    = azurerm_user_assigned_identity.client_identity.id
+  user_name                    = var.user_name
+  user_password                = local.password
+
+  count                        = var.deploy_network && var.deploy_azure_client && var.azure_alternate_region != null && var.azure_alternate_region != "" ? 1 : 0
+}
+
 module serverless {
   source                       = "./modules/serverless"
   appinsights_id               = azurerm_application_insights.insights.id
@@ -86,6 +102,30 @@ module serverless {
   user_password                = local.password
 
   count                        = var.deploy_serverless && var.deploy_synapse ? 1 : 0
+  depends_on                   = [module.azure_network]
+}
+
+module serverless_alternate_region {
+  source                       = "./modules/serverless"
+  appinsights_id               = azurerm_application_insights.insights.id
+  appinsights_instrumentation_key = azurerm_application_insights.insights.instrumentation_key
+  configure_egress             = true
+  connection_string            = var.deploy_synapse ? module.synapse[0].connection_string : ""
+  egress_subnet_id             = var.deploy_network ? module.azure_network_alternate_region[0].app_service_subnet_id : null
+  location                     = var.azure_alternate_region
+  log_analytics_workspace_resource_id = azurerm_log_analytics_workspace.workspace.id
+  monitor_action_group_id      = azurerm_monitor_action_group.arm_roles.id
+  resource_group_name          = azurerm_resource_group.synapse.name
+  row_count                    = var.serverless_row_count
+  sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
+  sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
+  suffix                       = local.suffix
+  user_assigned_identity_client_id = var.use_managed_identity ? azurerm_user_assigned_identity.client_identity.client_id : null
+  user_assigned_identity_id    = azurerm_user_assigned_identity.client_identity.id
+  user_name                    = var.user_name
+  user_password                = local.password
+
+  count                        = var.deploy_serverless && var.deploy_synapse && var.azure_alternate_region != null && var.azure_alternate_region != "" ? 1 : 0
   depends_on                   = [module.azure_network]
 }
 

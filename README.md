@@ -1,7 +1,7 @@
 # Testing Synapse Analytics Network Performance
 
 This repo can be used to demonstrate performance of connectivity between various clients and Synapse in Azure. Queries are executed from these clients to simulate 'real world' performance experienced by users.
-Synapse Analytics (formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
+Synapse Analytics (dedicated SQL pool formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
 
 
 <br/>
@@ -66,12 +66,12 @@ Terraform input variable`deploy_azure_client` should be set to `true` when provi
 ```
 terraform output user_name
 terraform output user_password
-terraform output azure_windows_vm_public_ip_address
+terraform output windows_vm_public_ip_address
 ```
 You can also use the generated file at data/default/azure-client.rdp.   
 Connect to Synapse Analytics using SQL Server Management Studio. The Synapse Analytics credentials are the same as for the VM. The FQDN can be fetched using:
 ```
-terraform output azure_sql_dwh_fqdn
+terraform output sql_dwh_fqdn
 ```
 The VM will already have SQL Server Management Studio installed, and the Virtual Network is configured to use the Private Endpoint of Synapse Analytics. Within SQL Server Management Studio, run a query e.g.
 ```

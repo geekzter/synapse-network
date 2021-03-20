@@ -86,7 +86,7 @@ resource azurerm_app_service_virtual_network_swift_connection network {
 resource azurerm_monitor_scheduled_query_rules_alert top_test_alert {
   name                         = "${azurerm_function_app.top_test.name}-alert"
   resource_group_name          = var.resource_group_name
-  location                     = var.location
+  location                     = data.azurerm_resource_group.rg.location
 
   action {
     action_group               = [var.monitor_action_group_id]

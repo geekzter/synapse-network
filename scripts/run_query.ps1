@@ -79,13 +79,13 @@ try {
     Push-Location $tfdirectory
     
     if (!$ResourceGroup) {
-        $ResourceGroup = (GetTerraformOutput "azure_resource_group_name")  
+        $ResourceGroup = (GetTerraformOutput "resource_group_name")  
     }
     if (!$SqlDatabaseName) {
-        $SqlDatabaseName = (GetTerraformOutput "azure_sql_dwh_pool_name")  
+        $SqlDatabaseName = (GetTerraformOutput "sql_dwh_pool_name")  
     }
     if (!$SqlServerFQDN) {
-        $SqlServerFQDN = (GetTerraformOutput "azure_sql_dwh_fqdn")  
+        $SqlServerFQDN = (GetTerraformOutput "sql_dwh_fqdn")  
     }
     if (!$SqlUser) {
         $SqlUser = (GetTerraformOutput "user_name")  
