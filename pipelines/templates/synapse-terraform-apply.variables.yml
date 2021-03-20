@@ -12,3 +12,5 @@ variables:
   value: 0
 - name: 'jobTimeOutMinutes'
   value: 180
+- name: 'repository'
+  value: 'synapse-performance'

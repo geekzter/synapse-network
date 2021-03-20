@@ -14,12 +14,13 @@ locals {
   password                     = ".Az9${random_string.password.result}"
   publicip                     = chomp(data.http.localpublicip.body)
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
-  suffix                       = random_string.suffix.result
+  suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result  
   tags                         = map(
     "application",               "Synapse Performance",
     "environment",               "dev",
     "provisioner",               "terraform",
     "repository",                "synapse-performance",
+    "runid",                     var.run_id,
     "suffix",                    local.suffix,
     "workspace",                 terraform.workspace
   )

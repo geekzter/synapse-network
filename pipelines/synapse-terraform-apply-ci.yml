@@ -74,7 +74,7 @@ variables:
 - template: ./templates/synapse-terraform-apply.variables.yml
   # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
 - group: 'synapse-ci'
-- name: 'TF_VAR_build_id'
+- name: 'TF_VAR_run_id'
   value: '$(Build.BuildId)'
 - name: 'TF_VAR_resource_suffix'
   value: 'b$(Build.BuildId)'

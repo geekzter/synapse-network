@@ -18,6 +18,15 @@ variable azure_sql_dwh_dwu {
   default      = "DW100c"
 }
 
+variable resource_suffix {
+  description  = "The suffix to put at the of resource names created"
+  default      = "" # Empty string triggers a random suffix
+}
+variable run_id {
+  type         = string
+  default      = ""
+}
+
 variable deploy_network {
   type         = bool
   default      = true

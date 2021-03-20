@@ -317,8 +317,6 @@ stages:
               # List environment variables
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,TF_* | Sort-Object -Property Name
 
-              #terraform init
-
               Copy-Item backend.tf.example backend.tf
               terraform init -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP_NAME)" `
                              -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT_NAME)" `
@@ -1078,20 +1076,24 @@ stages:
           name: terraform
           displayName: 'Clear Terraform workspace'
           condition: succeededOrFailed()
-          enabled: false # ${{ not(parameters.testMode) }}
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
             scriptLocation: inlineScript
-            # ARM_* environment variables are required by Terraform azurerm provider and backend
-            # https://www.terraform.io/docs/providers/azurerm/index.html
-            # https://www.terraform.io/docs/backends/types/azurerm.html
-            # Use Pipeline Service Principal and Service Connection to set up these variables
             inlineScript: |
-              $(scriptDirectory)/tf_deploy.ps1 -init -trace $(trace)
-              $(scriptDirectory)/erase.ps1 -destroy -force -wait -timeoutminutes $(jobTimeOutMinutes)
+              # Build JMESPath expression
+              $tagQuery = "[?tags.repository == '$(repository)' && tags.workspace == '${env:TF_WORKSPACE}' && tags.run_id == '$(Build.BuildId)' && properties.provisioningState != 'Deleting'].id"
+              Write-Host "Removing resource group identified by `"$tagQuery`"..."
+              $resourceGroupIDs = $(az group list --query "$tagQuery" -o tsv)
+              if ($resourceGroupIDs) {
+                Write-Host "az resource delete --ids ${resourceGroupIDs}..."
+                az resource delete --ids $resourceGroupIDs --verbose
+              } else {
+                Write-Host "Nothing to remove"
+              }
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
-            workingDirectory: '$(scriptDirectory)'
+            workingDirectory: '$(terraformVersion)'
             
