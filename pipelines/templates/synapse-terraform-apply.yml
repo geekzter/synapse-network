@@ -295,7 +295,7 @@ stages:
             TF_VAR_default_update_timeout: '$(jobTimeOutMinutes)m'
 
         - task: AzureCLI@2
-          displayName: 'Terraform init & apply'
+          displayName: 'Terraform init'
           enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
@@ -315,8 +315,8 @@ stages:
               $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)              
               
               # List environment variables
-
-              Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,GITHUB_*,TF_* | Sort-Object -Property Name
+              Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,TF_* | Sort-Object -Property Name
+              
               terraform init
             addSpnToEnvironment: true
             useGlobalConfig: true
