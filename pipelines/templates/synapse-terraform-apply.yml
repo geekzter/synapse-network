@@ -201,7 +201,7 @@ stages:
     - job: 'Provision'
       dependsOn: 
       - Prepare
-      - CreateEnvironment
+      # - CreateEnvironment
       displayName: 'Provision Infrastructure with Terraform'
       condition: succeeded()
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
