@@ -3,6 +3,7 @@
 This repo can be used to demonstrate performance of connectivity between various clients and Synapse in Azure. Queries are executed from these clients to simulate 'real world' performance experienced by users.
 Synapse Analytics (dedicated SQL pool formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
 
+![](visuals/overview.png "Overview")   
 
 <br/>
 
@@ -116,7 +117,7 @@ You can of course run this anywhere you like, provided you have PowerShell and s
 
 ### Timer Azure Function
 For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. 
-<p align="center"><img src="visuals/function.png" width="75%" align="middle"></p>
+<p align="center"><img src="visuals/function.png" width="50%" align="middle"></p>
 
 This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
 Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, either run `deploy_function.ps1` or use the function tools to publish the Azure Function:     
