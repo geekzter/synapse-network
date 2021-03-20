@@ -158,7 +158,6 @@ AppRequests
 You can also join the metrics from both Application Insights with ExecRequests configured to be logged to Log Analytics. This provides end-to-end and Synapse query time in a single view:
 ```
 AppRequests
-AppRequests
 | join (AppTraces
     | where Message == "RunResult"
     | project OperationId, RowsRequested=Properties['RowsRequested'], RowsRetrieved=Properties['RowsRetrieved']) on OperationId
@@ -168,7 +167,8 @@ AppRequests
 | extend FunctionDuration=DurationMs*1ms
 | extend FunctionDurationSeconds=DurationMs/1000
 | extend SqlDurationSeconds=SqlDuration/1s
-| project TimeGenerated, OperationId, OperationName, Success, ResultCode, FunctionDurationSeconds, FunctionDuration, SqlDurationSeconds, SqlDuration, RowsRequested, RowsRetrieved, AppRoleName
+| extend Region=split(AppRoleName,"-")[4]
+| project TimeGenerated, OperationId, OperationName, Success, ResultCode, FunctionDurationSeconds, FunctionDuration, SqlDurationSeconds, SqlDuration, RowsRequested, RowsRetrieved, AppRoleName, Region
 | where TimeGenerated > ago(30d)
 | where AppRoleName contains_cs 'synapse' and OperationName =~ 'GetRows'
 | order by TimeGenerated desc
