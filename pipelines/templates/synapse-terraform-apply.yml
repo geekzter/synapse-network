@@ -357,6 +357,10 @@ stages:
               # List environment variables
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,TF_* | Sort-Object -Property Name
 
+              if (!(az extension list --query "[?name=='application-insights'].name" -o tsv)) {
+                az extension add --name application-insights -y -o none
+              }
+
               # Run Terraform
               terraform version
               terraform apply -auto-approve
@@ -365,6 +369,8 @@ stages:
             failOnStandardError: true
             powerShellIgnoreLASTEXITCODE: false
             workingDirectory: '$(terraformDirectory)'
+          env:
+            AZURE_EXTENSION_USE_DYNAMIC_INSTALL: 'yes_without_prompt'
 
   - ${{ if eq(parameters.reprovision, true) }}:
     # Provision again to test for issue's that only come up when resources already exist 
@@ -1017,7 +1023,7 @@ stages:
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
-            workingDirectory: '$(scriptDirectory)'
+            workingDirectory: '$(terraformDirectory)'
           env:
             TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
 
@@ -1056,6 +1062,7 @@ stages:
       displayName: 'Clean Up'
       # Run if Terraform destroy failed, or the whole pipeline was canceled
       #condition: or(and(ne(dependencies.Destroy.result, 'None'),ne(dependencies.Destroy.result, 'Skipped'),ne(dependencies.Destroy.result, 'Succeeded')), and(canceled(),variables.cleanUpOnCancel))
+      condition: always()
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
