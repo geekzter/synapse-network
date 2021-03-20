@@ -1108,7 +1108,7 @@ stages:
             scriptLocation: inlineScript
             inlineScript: |
               # Build JMESPath expression
-              $tagQuery = "[?tags.repository == '$(repository)' && tags.workspace == '${env:TF_WORKSPACE}' && tags.run_id == '$(Build.BuildId)' && properties.provisioningState != 'Deleting'].id"
+              $tagQuery = "[?tags.repository == '$(repository)' && tags.workspace == '${env:TF_WORKSPACE}' && tags.runid == '$(Build.BuildId)' && properties.provisioningState != 'Deleting'].id"
               Write-Host "Removing resource group identified by `"$tagQuery`"..."
               $resourceGroupIDs = $(az group list --query "${tagQuery}" -o tsv)
 
