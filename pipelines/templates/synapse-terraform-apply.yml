@@ -166,7 +166,7 @@ stages:
         enabled: ${{ parameters.testMode }}
       - task: AzureCLI@2
         displayName: 'Gather Terraform settings'
-        enabled: ${{ not(parameters.testMode) }}
+        enabled: false # ${{ not(parameters.testMode) }}
         name: terraformConfig
         inputs:
           azureSubscription: '$(subscriptionConnection)'
@@ -176,26 +176,25 @@ stages:
             # List environment variables
             Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
 
-            # This will write version info as output variable
-            $(scriptDirectory)/get_tf_version.ps1 -version $(terraformVersionRequest)
-          addSpnToEnvironment: true
+            $terraformVersion = (Get-Content .terraform-version)
+            Write-Host "##vso[task.setvariable variable=version;isOutput=true]${terraformVersion}"
           useGlobalConfig: true
           failOnStandardError: true
-          workingDirectory: '$(scriptDirectory)'
+          workingDirectory: '$(terraformDirectory)'
 
-  - ${{ if or(eq(parameters.provision, true),eq(parameters.reprovision, true),eq(parameters.deploy, true),eq(parameters.deployIaaS, true)) }}:
-    # Creates an environment if it doesn't exist yet
-    - deployment: CreateEnvironment
-      displayName: Create Environment (if it does not exist yet)
-      pool:
-        vmImage: 'ubuntu-latest'
-      environment: '${{ parameters.workspace }}'
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - script: echo Environment ${{ parameters.workspace }} exists
-              displayName: 'Create environment ${{ parameters.workspace }}'
+  # - ${{ if or(eq(parameters.provision, true),eq(parameters.reprovision, true),eq(parameters.deploy, true),eq(parameters.deployIaaS, true)) }}:
+  #   # Creates an environment if it doesn't exist yet
+  #   - deployment: CreateEnvironment
+  #     displayName: Create Environment (if it does not exist yet)
+  #     pool:
+  #       vmImage: 'ubuntu-latest'
+  #     environment: '${{ parameters.workspace }}'
+  #     strategy:
+  #       runOnce:
+  #         deploy:
+  #           steps:
+  #           - script: echo Environment ${{ parameters.workspace }} exists
+  #             displayName: 'Create environment ${{ parameters.workspace }}'
 
   - ${{ if or(eq(parameters.provision, true),eq(parameters.reprovision, true),eq(parameters.deploy, true),eq(parameters.deployIaaS, true)) }}:
     # Provision on self-hosted agent
@@ -229,26 +228,26 @@ stages:
 
         - task: DownloadSecureFile@1
           displayName: 'Download SSL certificate'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             secureFile: '$(TF_VAR_vanity_certificate_path)'
 
         - task: DownloadSecureFile@1
           displayName: 'Download SSL root certificate'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
   
         - task: DownloadSecureFile@1
           displayName: 'Download VPN root certificate'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             secureFile: '$(TF_VAR_vpn_root_cert_file)'
 
         # We could do this with tfenv, however there is no task for that
         - task: TerraformInstaller@0
           displayName: 'Use preferred Terraform version'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             terraformVersion: '$(terraformVersion)'
 
@@ -274,7 +273,7 @@ stages:
           # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
           name: terraform
           displayName: 'Terraform init & apply'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
@@ -327,25 +326,25 @@ stages:
         # Assume workspace is empty and re-download secure files
         - task: DownloadSecureFile@1
           displayName: 'Download SSL certificate'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             secureFile: '$(TF_VAR_vanity_certificate_path)'
 
         - task: DownloadSecureFile@1
           displayName: 'Download SSL root certificate'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
   
         - task: DownloadSecureFile@1
           displayName: 'Download VPN root certificate'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             secureFile: '$(TF_VAR_vpn_root_cert_file)'
 
         - task: TerraformInstaller@0
           displayName: 'Use preferred Terraform version'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             terraformVersion: '$(terraformVersion)'
 
@@ -362,7 +361,7 @@ stages:
         # Stopped VM's do not allow extensions to be installed
         - task: AzureResourceGroupDeployment@2
           displayName: 'Stop VM''s in VDC resource group'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             action: Stop
@@ -370,7 +369,7 @@ stages:
 
         - task: AzureResourceGroupDeployment@2
           displayName: 'Deallocate VM''s in App resource group'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             action: StopWithDeallocate
@@ -388,7 +387,7 @@ stages:
         - task: AzureCLI@2
           name: terraform
           displayName: 'Terraform init and apply (re-entrance test)'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
@@ -476,7 +475,7 @@ stages:
           name: terraformConfig
           displayName: 'Terraform init'
           condition: succeededOrFailed()
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
@@ -517,7 +516,7 @@ stages:
 
         - task: AzureCLI@2
           displayName: 'Import database, set permissions (with script) & swap App Service slots'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
@@ -584,7 +583,7 @@ stages:
         - task: AzureCLI@2
           name: waitforagents
           displayName: 'Wait for environment agents to come online'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
@@ -656,7 +655,7 @@ stages:
             # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
             - task: DownloadPipelineArtifact@2
               displayName: 'Download ASP.NET Core App Artifacts'
-              enabled: ${{ not(parameters.testMode) }}
+              enabled: false # ${{ not(parameters.testMode) }}
               inputs:
                 buildType: 'specific'
                 project: '$(appArtifectProject)'
@@ -678,7 +677,7 @@ stages:
                 downloadPath: '$(appArtifactDirectory)'
             - task: DownloadPipelineArtifact@2
               displayName: 'Download Scripts'
-              enabled: ${{ not(parameters.testMode) }}
+              enabled: false # ${{ not(parameters.testMode) }}
               inputs:
                 buildType: 'specific'
                 project: '$(appArtifectProject)'
@@ -702,7 +701,7 @@ stages:
             # Configure IIS on VM's
             - task: IISWebAppManagementOnMachineGroup@0
               displayName: 'Configure IIS App'
-              enabled: ${{ not(parameters.testMode) }}
+              enabled: false # ${{ not(parameters.testMode) }}
               inputs:
                 EnableIIS: true
                 WebsiteName: 'Default Web Site'
@@ -717,7 +716,7 @@ stages:
 
             - task: IISWebAppDeploymentOnMachineGroup@0
               displayName: 'Deploy IIS App'
-              enabled: ${{ not(parameters.testMode) }}
+              enabled: false # ${{ not(parameters.testMode) }}
               inputs:
                 WebSiteName: 'Default Web Site'
                 Package: '$(appPackage)'
@@ -731,14 +730,14 @@ stages:
 
             - task: CopyFiles@2
               displayName: 'Copy Warmup Scripts'
-              enabled: ${{ not(parameters.testMode) }}
+              enabled: false # ${{ not(parameters.testMode) }}
               inputs:
                 SourceFolder: '$(appScriptsDirectory)'
                 TargetFolder: 'C:\Users\Public\Documents'
 
             - task: BatchScript@1
               displayName: 'Schedule Warmup Scripts'
-              enabled: ${{ not(parameters.testMode) }}
+              enabled: false # ${{ not(parameters.testMode) }}
               inputs:
                 filename: '$(appScriptsDirectory)/schedule-warmup.cmd'
 
@@ -800,7 +799,7 @@ stages:
         # Test PaaS Application
         - task: PowerShell@2
           displayName: 'Test PaaS Application'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             targetType: 'inline'
             script: |
@@ -817,7 +816,7 @@ stages:
         - task: PowerShell@2
           displayName: 'Test API Management Portal'
           condition: and(succeeded(), eq(variables.deployAPIM, true))
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             targetType: 'inline'
             script: |
@@ -829,7 +828,7 @@ stages:
         - task: PowerShell@2
           displayName: 'Test API Management Gateway'
           condition: and(succeeded(), eq(variables.deployAPIM, true))
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             targetType: 'inline'
             script: |
@@ -883,25 +882,25 @@ stages:
         # Assume workspace is empty and re-download secure files
         - task: DownloadSecureFile@1
           displayName: 'Download SSL certificate'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             secureFile: '$(TF_VAR_vanity_certificate_path)'
 
         - task: DownloadSecureFile@1
           displayName: 'Download SSL root certificate'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             secureFile: '$(TF_VAR_vanity_root_certificate_cer_path)'
   
         - task: DownloadSecureFile@1
           displayName: 'Download VPN root certificate'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             secureFile: '$(TF_VAR_vpn_root_cert_file)'
             
         - task: TerraformInstaller@0
           displayName: 'Use preferred Terraform version'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             terraformVersion: '$(terraformVersion)'
 
@@ -926,7 +925,7 @@ stages:
           name: terraformConfig
           displayName: 'Terraform destroy'
           condition: succeededOrFailed()
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
@@ -947,7 +946,7 @@ stages:
         # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
         - task: PowerShell@2
           displayName: 'Save used Terraform version number with tfenv'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             targetType: filePath
             filePath: '$(scriptDirectory)/get_tf_version.ps1'
@@ -1033,7 +1032,7 @@ stages:
 
         - task: TerraformInstaller@0
           displayName: 'Use preferred Terraform version'
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             terraformVersion: '$(terraformVersion)'
           condition: always()
@@ -1044,7 +1043,7 @@ stages:
           name: terraform
           displayName: 'Clear Terraform workspace'
           condition: succeededOrFailed()
-          enabled: ${{ not(parameters.testMode) }}
+          enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore

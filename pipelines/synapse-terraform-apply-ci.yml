@@ -62,8 +62,8 @@ pr:
     - '*.vsdx'  
 
 schedules:
-- cron: '0 3 * * *'
-  displayName: 'Daily early morning build (UTC)'
+- cron: '0 1 * * *'
+  displayName: 'Nightly build (UTC)'
   # Run if there are no changes
   always: 'true'
   branches:
@@ -73,8 +73,7 @@ schedules:
 variables:
 - template: ./templates/synapse-terraform-apply.variables.yml
   # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
-  # The Terraform VDC project requires quite a number of settings
-- group: 'vdc-ci'
+- group: 'synapse-ci'
 - name: 'TF_VAR_build_id'
   value: '$(Build.BuildId)'
 - name: 'TF_VAR_resource_suffix'
