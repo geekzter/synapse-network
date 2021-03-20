@@ -295,7 +295,6 @@ stages:
             TF_VAR_default_update_timeout: '$(jobTimeOutMinutes)m'
 
         - task: AzureCLI@2
-          name: terraform-init
           displayName: 'Terraform init & apply'
           enabled: ${{ not(parameters.testMode) }}
           inputs:
