@@ -357,10 +357,6 @@ stages:
               # List environment variables
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,TF_* | Sort-Object -Property Name
 
-              # if (!(az extension list --query "[?name=='application-insights'].name" -o tsv)) {
-              #   az extension add --name application-insights -y -o none
-              # }
-
               # Run Terraform
               terraform version
               terraform apply -auto-approve
@@ -369,8 +365,6 @@ stages:
             failOnStandardError: true
             powerShellIgnoreLASTEXITCODE: false
             workingDirectory: '$(terraformDirectory)'
-          # env:
-          #   AZURE_EXTENSION_USE_DYNAMIC_INSTALL: 'yes_without_prompt'
 
   - ${{ if eq(parameters.reprovision, true) }}:
     # Provision again to test for issue's that only come up when resources already exist 
@@ -1128,7 +1122,7 @@ stages:
                 Write-Host "Removing resource group(s) `"${resourceGroupIDs}`"..."
                 &{ # az writes information to stderr
                   $ErrorActionPreference = 'SilentlyContinue'
-                  az resource delete --ids $resourceGroupIDs --verbose 2>&1
+                  az resource delete --ids $resourceGroupIDs 2>&1
                 }
               } else {
                 Write-Host "Nothing to remove"
