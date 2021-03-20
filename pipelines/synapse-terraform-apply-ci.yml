@@ -71,7 +71,7 @@ schedules:
     - master
 
 variables:
-- template: ./templates/terraform-apply.variables.yml
+- template: ./templates/synapse-terraform-apply.variables.yml
   # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
   # The Terraform VDC project requires quite a number of settings
 - group: 'vdc-ci'
@@ -81,7 +81,7 @@ variables:
   value: 'b$(Build.BuildId)'
 
 stages:
-- template: ./templates/terraform-apply.yml
+- template: ./templates/synapse-terraform-apply.yml
   parameters:
     name: 'CI'
     displayName: 'Provision, Deploy, Tear down'
