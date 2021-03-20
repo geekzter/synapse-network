@@ -1086,5 +1086,5 @@ stages:
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
-            workingDirectory: '$(terraformVersion)'
+            workingDirectory: '$(terraformDirectory)'
             
