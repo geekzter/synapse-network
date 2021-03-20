@@ -166,7 +166,7 @@ stages:
         enabled: ${{ parameters.testMode }}
       - task: AzureCLI@2
         displayName: 'Gather Terraform settings'
-        enabled: false # ${{ not(parameters.testMode) }}
+        enabled: ${{ not(parameters.testMode) }}
         name: terraformConfig
         inputs:
           azureSubscription: '$(subscriptionConnection)'
@@ -247,7 +247,7 @@ stages:
         # We could do this with tfenv, however there is no task for that
         - task: TerraformInstaller@0
           displayName: 'Use preferred Terraform version'
-          enabled: false # ${{ not(parameters.testMode) }}
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             terraformVersion: '$(terraformVersion)'
 
@@ -344,7 +344,7 @@ stages:
 
         - task: TerraformInstaller@0
           displayName: 'Use preferred Terraform version'
-          enabled: false # ${{ not(parameters.testMode) }}
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             terraformVersion: '$(terraformVersion)'
 
@@ -1032,7 +1032,7 @@ stages:
 
         - task: TerraformInstaller@0
           displayName: 'Use preferred Terraform version'
-          enabled: false # ${{ not(parameters.testMode) }}
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             terraformVersion: '$(terraformVersion)'
           condition: always()
