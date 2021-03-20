@@ -80,7 +80,6 @@ resource azurerm_storage_blob setup_windows_vm_ps1 {
 
   type                         = "Block"
   source_content               = templatefile("${path.module}/setup_windows_vm.ps1", { 
-    sql_dwh_private_ip_address = var.sql_dwh_private_ip_address
     sql_dwh_fqdn               = var.sql_dwh_fqdn
     sql_dwh_pool               = var.sql_dwh_pool
     user_name                  = var.user_name

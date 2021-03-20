@@ -2,6 +2,10 @@ data azurerm_resource_group rg {
   name                         = var.resource_group_name
 }
 
+locals {
+  sql_server_name              = split("/",var.sql_server_id)[8]
+}
+
 resource azurerm_virtual_network vnet {
   name                         = "${data.azurerm_resource_group.rg.name}-${var.location}-network"
   location                     = var.location
@@ -77,6 +81,30 @@ resource azurerm_private_dns_zone_virtual_network_link sql {
   private_dns_zone_name        = split("/",var.private_dns_zone_id)[8]
   virtual_network_id           = azurerm_virtual_network.vnet.id
 }
+resource azurerm_private_endpoint sql_server_endpoint {
+  name                         = "${local.sql_server_name}-${var.location}-endpoint"
+  resource_group_name          = data.azurerm_resource_group.rg.name
+  location                     = var.location
+  
+  subnet_id                    = azurerm_subnet.vm_subnet.id
+
+  private_dns_zone_group {
+    name                       = split("/",var.private_dns_zone_id)[8]
+    private_dns_zone_ids       = [var.private_dns_zone_id]
+  }
+
+  private_service_connection {
+    is_manual_connection       = false
+    name                       = "${local.sql_server_name}-${var.location}-endpoint-connection"
+    private_connection_resource_id = var.sql_server_id
+    subresource_names          = ["sqlServer"]
+  }
+
+  tags                         = data.azurerm_resource_group.rg.tags
+
+  count                        = var.create_sql_server_endpoint ? 1 : 0
+}
+
 
 # https://docs.microsoft.com/en-us/azure/vpn-gateway/vpn-gateway-peering-gateway-transit#resource-manager-to-resource-manager-peering-with-gateway-transit
 resource azurerm_virtual_network_peering spoke_to_hub {

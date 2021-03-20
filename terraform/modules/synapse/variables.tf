@@ -1,10 +1,5 @@
 variable admin_object_id {}
 
-variable create_network_resources {
-  type         = bool
-  default      = false
-}
-
 variable dwu {
   type         = string
   default      = "DW100c"
@@ -25,11 +20,6 @@ variable private_dns_zone_id {}
 
 variable region {
   type         = string
-}
-
-variable subnet_id {
-  type         = string
-  default      = null
 }
 
 variable resource_group_name {

@@ -165,18 +165,26 @@ function GetAccessToken (
 }
 
 function GetTerraformOutput (
-    [parameter(Mandatory=$true)][string]$OutputVariable
+    [parameter(Mandatory=$true)][string]$OutputVariable,
+    [parameter(Mandatory=$false)][switch]$ComplexType
 ) {
     Invoke-Command -ScriptBlock {
         $Private:ErrorActionPreference    = "SilentlyContinue"
         Write-Verbose "terraform output ${OutputVariable}: evaluating..."
-        $result = $(terraform output $OutputVariable 2>$null)
-        $result = (($result -replace '^"','') -replace '"$','') # Remove surrounding quotes (Terraform 0.14)
+        if ($ComplexType) {
+            $result = $(terraform output -json $OutputVariable 2>$null)
+        } else {
+            $result = $(terraform output $OutputVariable 2>$null)
+            $result = (($result -replace '^"','') -replace '"$','') # Remove surrounding quotes (Terraform 0.14)
+        }
         if ($result -match "\[\d+m") {
             # Terraform warning, return null for missing output
             Write-Verbose "terraform output ${OutputVariable}: `$null (${result})"
             return $null
         } else {
+            if ($ComplexType) {
+                $result = ($result | ConvertFrom-Json)  
+            }
             Write-Verbose "terraform output ${OutputVariable}: ${result}"
             return $result
         }

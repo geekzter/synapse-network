@@ -68,7 +68,7 @@ terraform output user_name
 terraform output user_password
 terraform output windows_vm_public_ip_address
 ```
-You can also use the generated file at data/default/azure-client.rdp.   
+You can also use the generated file at data/default/azure-[region]-client.rdp.   
 Connect to Synapse Analytics using SQL Server Management Studio. The Synapse Analytics credentials are the same as for the VM. The FQDN can be fetched using:
 ```
 terraform output sql_dwh_fqdn

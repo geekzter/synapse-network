@@ -2,8 +2,10 @@ module azure_network {
   source                       = "./modules/azure-network"
   resource_group_name          = azurerm_resource_group.synapse.name
   address_space                = "10.0.0.0/16"
+  create_sql_server_endpoint   = var.deploy_synapse
   location                     = azurerm_resource_group.synapse.location
   private_dns_zone_id          = azurerm_private_dns_zone.sql_dns_zone.id
+  sql_server_id                = var.deploy_synapse ? module.synapse.0.sql_dwh_id : null
   
   count                        = var.deploy_network ? 1 : 0
 }
@@ -13,9 +15,11 @@ module azure_network_alternate_region {
   resource_group_name          = azurerm_resource_group.synapse.name
   address_space                = "10.1.0.0/16"
   create_peering               = true
+  create_sql_server_endpoint   = var.deploy_synapse
   location                     = var.azure_alternate_region 
   peer_virtual_network_id      = module.azure_network[0].virtual_network_id
   private_dns_zone_id          = azurerm_private_dns_zone.sql_dns_zone.id
+  sql_server_id                = var.deploy_synapse ? module.synapse.0.sql_dwh_id : null
   
   count                        = var.deploy_network && var.azure_alternate_region != null && var.azure_alternate_region != "" ? 1 : 0
 }
@@ -40,7 +44,7 @@ module aws_client {
   aws_key_name                 = aws_key_pair.pem_key[0].key_name
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
-  sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
+  sql_dwh_private_ip_address   = var.deploy_synapse ? module.azure_network[0].sql_server_private_ip_address : "10.11.12.13"
   subnet_id                    = var.deploy_s2s_vpn ? module.aws_azure_vpn[0].aws_subnet_id : null
   suffix                       = local.suffix
   user_name                    = var.user_name
@@ -56,7 +60,6 @@ module azure_client {
   scripts_storage_container_id = azurerm_storage_container.scripts.id
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
-  sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
   subnet_id                    = module.azure_network[0].vm_subnet_id
   user_assigned_identity_id    = azurerm_user_assigned_identity.client_identity.id
   user_name                    = var.user_name
@@ -72,7 +75,6 @@ module azure_client_alternate_region {
   scripts_storage_container_id = azurerm_storage_container.scripts.id
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
-  sql_dwh_private_ip_address   = var.deploy_synapse ? module.synapse[0].sql_dwh_private_ip_address : "10.11.12.13"
   subnet_id                    = module.azure_network_alternate_region[0].vm_subnet_id
   user_assigned_identity_id    = azurerm_user_assigned_identity.client_identity.id
   user_name                    = var.user_name
@@ -143,8 +145,6 @@ module synapse {
   user_assigned_identity_name  = azurerm_user_assigned_identity.client_identity.name
   user_name                    = var.user_name
   user_password                = local.password
-  create_network_resources     = var.deploy_network
-  subnet_id                    = var.deploy_network ? module.azure_network[0].vm_subnet_id : null
 
   count                        = var.deploy_synapse ? 1 : 0
 }

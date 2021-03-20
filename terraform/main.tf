@@ -19,7 +19,7 @@ locals {
     "application",               "Synapse Performance",
     "environment",               "dev",
     "provisioner",               "terraform",
-    "repository",                "aws-azure-vpn",
+    "repository",                "synapse-performance",
     "suffix",                    local.suffix,
     "workspace",                 terraform.workspace
   )

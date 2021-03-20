@@ -4,9 +4,6 @@ locals {
   connection_string            = var.grant_database_access ? local.connection_string_msi : local.connection_string_legacy
   publicip                     = chomp(data.http.localpublicip.body)
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
-  subnet_name                  = var.create_network_resources ? element(split("/",var.subnet_id),length(split("/",var.subnet_id))-1) : null
-  virtual_network_id           = var.create_network_resources ? replace(var.subnet_id,"/subnets/${local.subnet_name}","") : null
-  virtual_network_name         = var.create_network_resources ? element(split("/",local.virtual_network_id),length(split("/",local.virtual_network_id))-1) : null
 }
 
 data azurerm_client_config current {}
@@ -153,27 +150,3 @@ resource null_resource grant_sql_access {
   # Terraform change scripts require Terraform to be the AAD DBA
   depends_on                   = [azurerm_sql_active_directory_administrator.dba]
 }
-
-resource azurerm_private_endpoint sql_dwh_endpoint {
-  name                         = "${azurerm_sql_database.sql_dwh.name}-${var.region}-endpoint"
-  resource_group_name          = var.resource_group_name
-  location                     = var.region
-  
-  subnet_id                    = var.subnet_id
-
-  private_dns_zone_group {
-    name                       = split("/",var.private_dns_zone_id)[8]
-    private_dns_zone_ids       = [var.private_dns_zone_id]
-  }
-
-  private_service_connection {
-    is_manual_connection       = false
-    name                       = "${azurerm_sql_server.sql_dwh.name}-${var.region}-endpoint-connection"
-    private_connection_resource_id = azurerm_sql_server.sql_dwh.id
-    subresource_names          = ["sqlServer"]
-  }
-
-  tags                         = data.azurerm_resource_group.rg.tags
-
-  count                        = var.create_network_resources ? 1 : 0
- }
