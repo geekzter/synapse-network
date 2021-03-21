@@ -18,12 +18,22 @@ steps:
     echo See https://aka.ms/yaml
   displayName: 'Run a multi-line script'
 
-- task: SqlAzureDacpacDeployment@1
+# - task: SqlAzureDacpacDeployment@1
+#   inputs:
+#     azureSubscription: 'internal-azure-subscription'
+#     AuthenticationType: 'aadAuthenticationIntegrated'
+#     ServerName: 'synapse-network-default-wuvn-sqldwserver'
+#     DatabaseName: 'synapse-network-default-wuvn-sqldw'
+#     deployType: 'SqlTask'
+#     SqlFile: '$(Build.SourcesDirectory)/scripts/load-data.sql'
+#     IpDetectionMethod: 'AutoDetect'
+
+- task: SqlDacpacDeploymentOnMachineGroup@0
   inputs:
-    azureSubscription: 'internal-azure-subscription'
-    AuthenticationType: 'aadAuthenticationIntegrated'
+    TaskType: 'sqlQuery'
+    SqlFile: '$(Build.SourcesDirectory)/scripts/load-data.sql'
     ServerName: 'synapse-network-default-wuvn-sqldwserver'
     DatabaseName: 'synapse-network-default-wuvn-sqldw'
-    deployType: 'SqlTask'
-    SqlFile: '$(Build.SourcesDirectory)/scripts/load-data.sql'
-    IpDetectionMethod: 'AutoDetect'
+    AuthScheme: 'sqlServerAuthentication'
+    SqlUsername: 'demoadmin'
+    SqlPassword: '$(user_password)'
