@@ -127,7 +127,7 @@ stages:
     # value: 'ubuntu-latest'
     value: 'windows-latest' # SqlAzureDacpacDeployment requires Windows
   - name: rowCount
-    value: 100000
+    value: 3
 
   jobs:
   - job: 'Prepare'
