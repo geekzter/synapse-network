@@ -313,14 +313,13 @@ stages:
               # List environment variables
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,TF_* | Sort-Object -Property Name
 
-              # Copy-Item backend.tf.example backend.tf
+              Copy-Item backend.tf.example backend.tf
               # Run Terraform
               terraform version
-              terraform init
-              # terraform init -reconfigure `
-              #                -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP_NAME)" `
-              #                -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT_NAME)" `
-              #                -backend-config="container_name=$(TF_STATE_CONTAINER_NAME)" 
+              terraform init -reconfigure `
+                             -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP_NAME)" `
+                             -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT_NAME)" `
+                             -backend-config="container_name=$(TF_STATE_CONTAINER_NAME)" 
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
@@ -1030,14 +1029,13 @@ stages:
               $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
               $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)              
 
-              # Copy-Item backend.tf.example backend.tf
+              Copy-Item backend.tf.example backend.tf
               # Run Terraform
               terraform version
-              terraform init
-              # terraform init -reconfigure `
-              #                -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP_NAME)" `
-              #                -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT_NAME)" `
-              #                -backend-config="container_name=$(TF_STATE_CONTAINER_NAME)" 
+              terraform init -reconfigure `
+                             -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP_NAME)" `
+                             -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT_NAME)" `
+                             -backend-config="container_name=$(TF_STATE_CONTAINER_NAME)" 
               terraform destroy -auto-approve
             addSpnToEnvironment: true
             useGlobalConfig: true
@@ -1157,13 +1155,12 @@ stages:
               # Get from Azure CLI context
               $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
               $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)              
+              Copy-Item backend.tf.example backend.tf
               terraform version
-              # Copy-Item backend.tf.example backend.tf
-              terraform init
-              # terraform init -reconfigure `
-              #                -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP_NAME)" `
-              #                -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT_NAME)" `
-              #                -backend-config="container_name=$(TF_STATE_CONTAINER_NAME)" 
+              terraform init -reconfigure `
+                             -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP_NAME)" `
+                             -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT_NAME)" `
+                             -backend-config="container_name=$(TF_STATE_CONTAINER_NAME)" 
               $terraformState = (terraform state pull | ConvertFrom-Json)
               if ($terraformState.resources) {
                 Write-Host "Clearing Terraform state in workspace ${env:TF_WORKSPACE}..."
