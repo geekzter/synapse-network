@@ -126,7 +126,8 @@ stages:
     ${{ if eq(parameters.destroy, 'On success') }}:
       value: false
   - name: vmImage
-    value: 'ubuntu-latest'
+    # value: 'ubuntu-latest'
+    value: 'windows-latest'
 
   jobs:
   - job: 'Prepare'
