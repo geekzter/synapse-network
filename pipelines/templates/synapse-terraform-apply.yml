@@ -436,6 +436,11 @@ stages:
               $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
               $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)              
               
+              # Convert uppercased Terraform environment variables to their original casing expeted by Terraform
+              foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
+                  $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
+                  Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
+              } 
               # List environment variables
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,TF_* | Sort-Object -Property Name
 
@@ -892,7 +897,8 @@ stages:
               $env:ARM_TENANT_ID       ??= $env:tenantId
               # Get from Azure CLI context
               $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
-              $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)              
+              $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+
               Copy-Item backend.tf.example backend.tf
               terraform version
               terraform init -reconfigure `
