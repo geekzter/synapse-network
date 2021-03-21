@@ -587,14 +587,14 @@ stages:
               $env:ARM_TENANT_ID       ??= $env:tenantId
               $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
               $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
-              $(scriptDirectory)/load_data.ps1 -ResourceGroup $(resourceGroup) `
-                                               -SqlServerFQDN $(sqlServerFQDN) `
-                                               -SqlDatabaseName $(sqlDatabase) `
-                                               -UserName $(adminUser)`
-                                               -Password "$(adminPassword)"
+              ./load_data.ps1 -ResourceGroup $(resourceGroup) `
+                              -SqlServerFQDN $(sqlServerFQDN) `
+                              -SqlDatabaseName $(sqlDatabase) `
+                              -UserName $(adminUser)`
+                              -Password "$(adminPassword)"
             addSpnToEnvironment: true
             useGlobalConfig: true
-            workingDirectory: '$(terraformDirectory)'
+            workingDirectory: '$(scriptDirectory)'
             failOnStandardError: true
 
   - ${{ if eq(parameters.deploy, true) }}:
