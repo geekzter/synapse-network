@@ -576,7 +576,7 @@ stages:
 
         - task: AzureCLI@2
           displayName: 'Load New York Taxicab data'
-          enabled: false ${{ not(parameters.testMode) }}
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
