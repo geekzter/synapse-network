@@ -551,28 +551,28 @@ stages:
         #     IpDetectionMethod: 'AutoDetect'
         #     # deleteFirewallRule: true
 
-        # - task: AzureCLI@2
-        #   displayName: 'Load New York Taxicab data'
-        #   enabled: ${{ not(parameters.testMode) }}
-        #   inputs:
-        #     azureSubscription: '$(subscriptionConnection)'
-        #     scriptType: pscore
-        #     scriptLocation: inlineScript
-        #     inlineScript: |
-        #       $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
-        #       $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
-        #       $env:ARM_TENANT_ID       ??= $env:tenantId
-        #       $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
-        #       $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
-        #       ./load_data.ps1 -ResourceGroup $(resourceGroup) `
-        #                       -SqlServerFQDN $(sqlServerFQDN) `
-        #                       -SqlDatabaseName $(sqlDatabase) `
-        #                       -UserName $(adminUser)`
-        #                       -Password "$(adminPassword)"
-        #     addSpnToEnvironment: true
-        #     useGlobalConfig: true
-        #     workingDirectory: '$(scriptDirectory)'
-        #     failOnStandardError: true
+        - task: AzureCLI@2
+          displayName: 'Load New York Taxicab data'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+              $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+              $env:ARM_TENANT_ID       ??= $env:tenantId
+              $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+              $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+              ./load_data.ps1 -ResourceGroup $(resourceGroup) `
+                              -SqlServerFQDN $(sqlServerFQDN) `
+                              -SqlDatabaseName $(sqlDatabase) `
+                              -UserName $(adminUser)`
+                              -Password "$(adminPassword)"
+            addSpnToEnvironment: true
+            useGlobalConfig: true
+            workingDirectory: '$(scriptDirectory)'
+            failOnStandardError: true
 
         # - task: AzureCLI@2
         #   displayName: 'Deploy Function(s)'
@@ -763,12 +763,10 @@ stages:
           displayName: 'Save used Terraform version number'
           enabled: ${{ not(parameters.testMode) }}
           inputs:
-            azureSubscription: '$(subscriptionConnection)'
-            scriptType: pscore
-            scriptLocation: inlineScript
-            inlineScript: |
-              $result = terraform -v | Select-String -Pattern '(?<version>[\d\.]+)'
-              $result.Matches[0].Groups['version'].Value | Out-File $(terraformDirectory)/.terraform-version
+            targetType: 'inline'
+            script: |
+              $result = (terraform -v | Select-String -Pattern '(?<version>[\d\.]+)')
+              $result.Matches[0].Groups['version'].Value | Out-File -FilePath .terraform-version -Force
             pwsh: true
             workingDirectory: '$(terraformDirectory)'
 
