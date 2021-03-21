@@ -480,7 +480,7 @@ stages:
         appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
         appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
         appMSIClientID: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_client_id'] ]
-        appSQLAdmin: 'demoadmin'
+        # appSQLAdmin: 'demoadmin'
         appSQLDatabase: $[ dependencies.Provision.outputs['terraform.paas_app_sql_database'] ]
         appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
         appSQLServer: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server'] ]
@@ -497,6 +497,8 @@ stages:
 
         sqlServerFQDN: $[ dependencies.Provision.outputs['terraform.sql_dwh_fqdn'] ]
         sqlDatabase: $[ dependencies.Provision.outputs['terraform.sql_dwh_pool_name'] ]
+        adminUser: $[ dependencies.Provision.outputs['terraform.user_name'] ]
+        adminPassword: $[ dependencies.Provision.outputs['terraform.user_password'] ]
 
       pool:
         # SqlAzureDacpacDeployment@1 only runs on Windows
@@ -532,46 +534,49 @@ stages:
           name: terraformConfig
           displayName: 'Terraform init'
           condition: succeededOrFailed()
-          enabled: false # ${{ not(parameters.testMode) }}
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
             scriptLocation: inlineScript
-            # ARM_* environment variables are required by Terraform azurerm provider and backend
-            # https://www.terraform.io/docs/providers/azurerm/index.html
-            # https://www.terraform.io/docs/backends/types/azurerm.html
-            # Use Pipeline Service Principal and Service Connection to set up these variables
             inlineScript: |
-              # List environment variables
-              Get-ChildItem -Path Env: -Recurse -Include ARM_*,TF_* | Sort-Object -Property Name
-              $(scriptDirectory)/tf_deploy.ps1 -init 
+              # Propagate pipeline Service Principal as Terraform variables
+              $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+              $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+              $env:ARM_TENANT_ID       ??= $env:tenantId
+              # Get from Azure CLI context
+              $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+              $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)              
+
+              Copy-Item backend.tf.example backend.tf
+              # Run Terraform
+              terraform version
+              terraform init -reconfigure `
+                             -backend-config="resource_group_name=$(TF_STATE_RESOURCE_GROUP_NAME)" `
+                             -backend-config="storage_account_name=$(TF_STATE_STORAGE_ACCOUNT_NAME)" `
+                             -backend-config="container_name=$(TF_STATE_CONTAINER_NAME)"
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
             workingDirectory: '$(scriptDirectory)'
 
-        - pwsh: |
-            Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
-          displayName: 'Download BACPAC'
-          enabled: false
-
-        # Requires a Windows Pipeline agent
-        - task: SqlAzureDacpacDeployment@1
-          displayName: 'Load New York Taxicab data'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            azureSubscription: '$(subscriptionConnection)'
-            AuthenticationType: 'aadAuthenticationIntegrated'
-            ServerName: '$(sqlServerFQDN)'
-            DatabaseName: '$(sqlDatabase)'
-            deployType: 'SqlTask'
-            SqlFile: '$(scriptDirectory)/load-data.sql'
-            IpDetectionMethod: 'AutoDetect'
-            # deleteFirewallRule: true
+        # # Requires a Windows Pipeline agent
+        # - task: SqlAzureDacpacDeployment@1
+        #   displayName: 'Load New York Taxicab data'
+        #   enabled: false # ${{ not(parameters.testMode) }}
+        #   inputs:
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     AuthenticationType: 'aadAuthenticationIntegrated'
+        #     ServerName: '$(sqlServerFQDN)'
+        #     DatabaseName: '$(sqlDatabase)'
+        #     deployType: 'SqlTask'
+        #     SqlFile: '$(scriptDirectory)/load-data.sql'
+        #     IpDetectionMethod: 'AutoDetect'
+        #     # deleteFirewallRule: true
 
         - task: AzureCLI@2
-          displayName: 'Import database, set permissions (with script) & swap App Service slots'
-          enabled: false # ${{ not(parameters.testMode) }}
+          displayName: 'Load New York Taxicab data'
+          enabled: false ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
@@ -582,21 +587,11 @@ stages:
               $env:ARM_TENANT_ID       ??= $env:tenantId
               $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
               $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
-              $(scriptDirectory)/punch_hole.ps1 -UsePreviewApis
-              cd $(scriptDirectory)
-              $(scriptDirectory)/deploy_paas_app.ps1 -All `
-                                    -AppResourceGroup $(paasResourceGroup) `
-                                    -AppAppServiceName $(appServiceName) `
-                                    -AppAppServiceIdentity $(appMSIName) `
-                                    -AppAppServiceClientID $(appMSIClientID) `
-                                    -DBAName $(dbaName) `
-                                    -DBAObjectId $(dbaObjectId) `
-                                    -AppUrl $(appURL) `
-                                    -DevOpsOrgUrl $(devOpsOrgURL) `
-                                    -DevOpsProject $(devOpsProject) `
-                                    -SqlServer $(appSQLServer) `
-                                    -SqlServerFQDN $(appSQLServerFQDN) `
-                                    -SqlDatabase $(appSQLDatabase)
+              $(scriptDirectory)/load_data.ps1 -ResourceGroup $(resourceGroup) `
+                                               -SqlServerFQDN $(sqlServerFQDN) `
+                                               -SqlDatabaseName $(sqlDatabase) `
+                                               -UserName $(adminUser)`
+                                               -Password $(adminPassword)
             addSpnToEnvironment: true
             useGlobalConfig: true
             workingDirectory: '$(terraformDirectory)'
