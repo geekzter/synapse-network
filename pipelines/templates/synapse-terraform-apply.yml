@@ -86,8 +86,6 @@ stages:
 
   # Global variables shared by all jobs
   variables:
-  - name: 'agentTag'
-    value: 'web'
   - name: 'artifactName'
     value: 'drop'
   - name: 'TF_WORKSPACE'
@@ -226,27 +224,6 @@ stages:
             displayName: 'Make Terraform providers executable'
             enabled: ${{ not(parameters.testMode) }}
             workingDirectory: $(terraformDirectory)/.terraform/providers/registry.terraform.io/hashicorp 
-
-        - task: AzureCLI@2
-          # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
-          # name: terraform
-          displayName: 'Terraform init & apply'
-          enabled: false # ${{ not(parameters.testMode) }}
-          inputs:
-            azureSubscription: '$(subscriptionConnection)'
-            scriptType: pscore
-            scriptLocation: inlineScript
-            # ARM_* environment variables are required by Terraform azurerm provider and backend
-            # https://www.terraform.io/docs/providers/azurerm/index.html
-            # https://www.terraform.io/docs/backends/types/azurerm.html
-            # Use Pipeline Service Principal and Service Connection to set up these variables
-            inlineScript: |
-              $(scriptDirectory)/tf_deploy.ps1 -init -clear:$${{ not(parameters.inherit) }} -stickysuffix:$${{ parameters.inherit }} -apply -force -trace $(trace) -parallelism $(parallelism)
-            addSpnToEnvironment: true
-            useGlobalConfig: true
-            failOnStandardError: true
-            powerShellIgnoreLASTEXITCODE: false
-            workingDirectory: '$(scriptDirectory)'
 
         - task: AzureCLI@2
           displayName: 'Terraform init'
@@ -402,7 +379,7 @@ stages:
           enabled: false # ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
-            action: Stop
+            action: Deallocate
             resourceGroupName: '$(resourceGroup)'
 
         - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
@@ -422,10 +399,6 @@ stages:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
             scriptLocation: inlineScript
-            # ARM_* environment variables are required by Terraform azurerm provider and backend
-            # https://www.terraform.io/docs/providers/azurerm/index.html
-            # https://www.terraform.io/docs/backends/types/azurerm.html
-            # Use Pipeline Service Principal and Service Connection to set up these variables
             inlineScript: |
               # Propagate pipeline Service Principal as Terraform variables
               $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
@@ -474,24 +447,26 @@ stages:
 
       variables:
         appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
-        appBuild: 'Release'
-        appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp3.1/publish.zip'
-        # Get application configuration from Terraform output
-        appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
-        appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
-        appMSIClientID: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_client_id'] ]
-        # appSQLAdmin: 'demoadmin'
-        appSQLDatabase: $[ dependencies.Provision.outputs['terraform.paas_app_sql_database'] ]
-        appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
-        appSQLServer: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server'] ]
-        appSQLServerFQDN: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server_fqdn'] ]
-        appURL: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
-        devOpsOrgURL: $[ dependencies.Provision.outputs['terraform.devops_org_url'] ]
-        devOpsProject: $[ dependencies.Provision.outputs['terraform.devops_project'] ]
-        dbaName: $[ dependencies.Provision.outputs['terraform.admin_login'] ]
-        dbaObjectID: $[ dependencies.Provision.outputs['terraform.admin_object_id'] ]
-        storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
-        storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
+
+        # appBuild: 'Release'
+        # appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp3.1/publish.zip'
+        # # Get application configuration from Terraform output
+        # appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
+        # appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
+        # appMSIClientID: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_client_id'] ]
+        # # appSQLAdmin: 'demoadmin'
+        # appSQLDatabase: $[ dependencies.Provision.outputs['terraform.paas_app_sql_database'] ]
+        # appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
+        # appSQLServer: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server'] ]
+        # appSQLServerFQDN: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server_fqdn'] ]
+        # appURL: $[ dependencies.Provision.outputs['terraform.paas_app_url'] ]
+        # devOpsOrgURL: $[ dependencies.Provision.outputs['terraform.devops_org_url'] ]
+        # devOpsProject: $[ dependencies.Provision.outputs['terraform.devops_project'] ]
+        # dbaName: $[ dependencies.Provision.outputs['terraform.admin_login'] ]
+        # dbaObjectID: $[ dependencies.Provision.outputs['terraform.admin_object_id'] ]
+        # storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
+        # storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
+
         # Use earlier prepared Terraform config
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
@@ -575,8 +550,27 @@ stages:
         #     # deleteFirewallRule: true
 
         - task: AzureCLI@2
-          displayName: 'Load New York Taxicab data'
+          displayName: 'Deploy Function(s)'
           enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            scriptType: pscore
+            scriptLocation: inlineScript
+            inlineScript: |
+              $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+              $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+              $env:ARM_TENANT_ID       ??= $env:tenantId
+              $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+              $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+              ./deploy_functions.ps1
+            addSpnToEnvironment: true
+            useGlobalConfig: true
+            workingDirectory: '$(scriptDirectory)'
+            failOnStandardError: true
+
+        - task: AzureCLI@2
+          displayName: 'Load New York Taxicab data'
+          enabled: false #${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             scriptType: pscore
@@ -647,33 +641,6 @@ stages:
               # Request page
               Write-Host "Requesting $(paasAppUrl)..."
               Invoke-WebRequest -Uri $(paasAppUrl) -MaximumRetryCount 9
-            failOnStderr: true
-            pwsh: true
-
-        # Test API Management
-        - task: PowerShell@2
-          displayName: 'Test API Management Portal'
-          condition: and(succeeded(), eq(variables.deployAPIM, true))
-          enabled: false # ${{ not(parameters.testMode) }}
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Request page
-              Write-Host "Requesting $(apimPortalUrl)..."
-              Invoke-WebRequest -Uri $(apimPortalUrl) -MaximumRetryCount 9
-            failOnStderr: true
-            pwsh: true
-        - task: PowerShell@2
-          displayName: 'Test API Management Gateway'
-          condition: and(succeeded(), eq(variables.deployAPIM, true))
-          enabled: false # ${{ not(parameters.testMode) }}
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Call REST Api
-              $apimDemoUrl = "$(apimGWUrl)echo/resource?param1=sample"
-              Write-Host "Performing GET request of $apimDemoUrl with Header Ocp-Apim-Subscription-Key = $(apimDemoKey)..."
-              Invoke-RestMethod -Header @{ "Ocp-Apim-Subscription-Key" = "$(apimDemoKey)" } -Method Get -Uri $apimDemoUrl -MaximumRetryCount 9
             failOnStderr: true
             pwsh: true
 
@@ -772,13 +739,13 @@ stages:
         # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
         - task: PowerShell@2
           displayName: 'Save used Terraform version number with tfenv'
-          enabled: false # `${{ not(parameters.testMode) }}
+          enabled: ${{ not(parameters.testMode) }}
           inputs:
-            targetType: filePath
-            filePath: '$(scriptDirectory)/get_tf_version.ps1'
-            arguments: ' -version installed | Out-File $(terraformDirectory)/.terraform-version'
+            inlineScript: |
+              $result = terraform -v | Select-String -Pattern '(?<version>[\d\.]+)'
+              $result.Matches[0].Groups['version'].Value | $(terraformDirectory)/.terraform-version
             pwsh: true
-            workingDirectory: '$(scriptDirectory)'
+            workingDirectory: '$(terraformDirectory)'
 
         - ${{ if eq(length(parameters.infraArtifactPipeline),0) }}:
         # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
@@ -847,7 +814,7 @@ stages:
         # Clear Terraform workspace, just in case
         # As a last resort, this also destroys any resources that may not have deleted before
         - task: AzureCLI@2
-          name: terraform
+          name: cleanup
           displayName: 'Clear Terraform workspace'
           condition: succeededOrFailed()
           enabled: ${{ not(parameters.testMode) }}
