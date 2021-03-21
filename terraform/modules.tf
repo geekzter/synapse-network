@@ -8,6 +8,7 @@ module azure_network {
   sql_server_id                = var.deploy_synapse ? module.synapse.0.sql_dwh_id : null
   
   count                        = var.deploy_network ? 1 : 0
+  depends_on                   = [azurerm_resource_group.synapse]
 }
 
 module azure_network_alternate_region {
@@ -22,6 +23,7 @@ module azure_network_alternate_region {
   sql_server_id                = var.deploy_synapse ? module.synapse.0.sql_dwh_id : null
   
   count                        = var.deploy_network && var.azure_alternate_region != null && var.azure_alternate_region != "" ? 1 : 0
+  depends_on                   = [azurerm_resource_group.synapse]
 }
 
 # Credits: https://deployeveryday.com/2020/04/13/vpn-aws-azure-terraform.html
@@ -37,6 +39,7 @@ module aws_azure_vpn {
   ssh_public_key               = var.ssh_public_key
 
   count                        = var.deploy_network && var.deploy_s2s_vpn ? 1 : 0
+  depends_on                   = [azurerm_resource_group.synapse]
 }
 
 module aws_client {
@@ -66,6 +69,7 @@ module azure_client {
   user_password                = local.password
 
   count                        = var.deploy_network && var.deploy_azure_client ? 1 : 0
+  depends_on                   = [azurerm_resource_group.synapse]
 }
 
 module azure_client_alternate_region {
@@ -81,6 +85,7 @@ module azure_client_alternate_region {
   user_password                = local.password
 
   count                        = var.deploy_network && var.deploy_azure_client && var.azure_alternate_region != null && var.azure_alternate_region != "" ? 1 : 0
+  depends_on                   = [azurerm_resource_group.synapse]
 }
 
 module serverless {
@@ -147,4 +152,5 @@ module synapse {
   user_password                = local.password
 
   count                        = var.deploy_synapse ? 1 : 0
+  depends_on                   = [azurerm_resource_group.synapse]
 }
