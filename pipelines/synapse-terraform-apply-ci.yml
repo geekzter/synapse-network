@@ -64,7 +64,7 @@ schedules:
   always: 'true'
   branches:
     include:
-    - master
+    - main
 
 variables:
 - template: ./templates/synapse-terraform-apply.variables.yml
