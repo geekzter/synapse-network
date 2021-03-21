@@ -229,7 +229,7 @@ stages:
 
         - task: AzureCLI@2
           # Name is required so Terraform output exported by tf_deploy.ps1 can be referenced by subsequent Pipeline steps
-          name: terraform
+          # name: terraform
           displayName: 'Terraform init & apply'
           enabled: false # ${{ not(parameters.testMode) }}
           inputs:
@@ -319,6 +319,7 @@ stages:
 
         - task: AzureCLI@2
           displayName: 'Terraform apply'
+          name: terraform
           enabled: ${{ not(parameters.testMode) }}
           inputs:
             azureSubscription: '$(subscriptionConnection)'
@@ -336,6 +337,15 @@ stages:
               # Run Terraform
               terraform version
               terraform apply -auto-approve 'ci.tfplan'
+
+              # Export Terraform output as task output
+              $json = terraform output -json | ConvertFrom-Json -AsHashtable
+              foreach ($outputVariable in $json.keys) {
+                  $value = $json[$outputVariable].value
+                  if ($value) {
+                      Write-Host "##vso[task.setvariable variable=$outputVariable;isOutput=true]$value"
+                  }
+              }              
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
@@ -545,20 +555,7 @@ stages:
           displayName: 'Download BACPAC'
           enabled: false
 
-        - task: SqlAzureDacpacDeployment@1 
-        # https://docs.microsoft.com/en-us/azure/devops/pipelines/tasks/deploy/sql-azure-dacpac-deployment
-          displayName: 'Import database'
-          enabled: false
-          inputs:
-            azureSubscription: '$(subscriptionConnection)'
-            authenticationType: aadAuthenticationIntegrated
-            serverName: $(appSQLServerFQDN)
-            databaseName: $(appSQLDatabase)
-            deploymentAction: Import
-            bacpacFile: '$(System.DefaultWorkingDirectory)/database.bacpac'
-            ipDetectionMethod: 'AutoDetect'
-            deleteFirewallRule: true
-
+        # Requires a Windows Pipeline agent
         - task: SqlAzureDacpacDeployment@1
           displayName: 'Load New York Taxicab data'
           enabled: ${{ not(parameters.testMode) }}
@@ -570,6 +567,7 @@ stages:
             deployType: 'SqlTask'
             SqlFile: '$(scriptDirectory)/load-data.sql'
             IpDetectionMethod: 'AutoDetect'
+            # deleteFirewallRule: true
 
         - task: AzureCLI@2
           displayName: 'Import database, set permissions (with script) & swap App Service slots'
