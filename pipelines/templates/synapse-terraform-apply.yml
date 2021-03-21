@@ -485,6 +485,9 @@ stages:
         # Use earlier prepared Terraform config
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
+        sqlServerFQDN: $[ dependencies.Provision.outputs['terraform.sql_dwh_fqdn'] ]
+        sqlDatabase: $[ dependencies.Provision.outputs['terraform.sql_dwh_pool_name'] ]
+
       pool:
         # SqlAzureDacpacDeployment@1 only runs on Windows
         vmImage: '$(vmImage)'
@@ -556,6 +559,18 @@ stages:
             ipDetectionMethod: 'AutoDetect'
             deleteFirewallRule: true
 
+        - task: SqlAzureDacpacDeployment@1
+          displayName: 'Load New York Taxicab data'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            AuthenticationType: 'aadAuthenticationIntegrated'
+            ServerName: '$(sqlServerFQDN)'
+            DatabaseName: '$(sqlDatabase)'
+            deployType: 'SqlTask'
+            SqlFile: '$(scriptDirectory)/load-data.sql'
+            IpDetectionMethod: 'AutoDetect'
+
         - task: AzureCLI@2
           displayName: 'Import database, set permissions (with script) & swap App Service slots'
           enabled: false # ${{ not(parameters.testMode) }}
@@ -588,27 +603,6 @@ stages:
             useGlobalConfig: true
             workingDirectory: '$(terraformDirectory)'
             failOnStandardError: true
-
-# - task: SqlAzureDacpacDeployment@1
-#   inputs:
-#     azureSubscription: 'internal-azure-subscription'
-#     AuthenticationType: 'aadAuthenticationIntegrated'
-#     ServerName: 'synapse-network-default-wuvn-sqldwserver'
-#     DatabaseName: 'synapse-network-default-wuvn-sqldw'
-#     deployType: 'SqlTask'
-#     SqlFile: '$(Build.SourcesDirectory)/scripts/load-data.sql'
-#     IpDetectionMethod: 'AutoDetect'
-
-# - task: SqlDacpacDeploymentOnMachineGroup@0
-#   inputs:
-#     TaskType: 'sqlQuery'
-#     SqlFile: '$(Build.SourcesDirectory)/scripts/load-data.sql'
-#     ServerName: 'synapse-network-default-wuvn-sqldwserver'
-#     DatabaseName: 'synapse-network-default-wuvn-sqldw'
-#     AuthScheme: 'sqlServerAuthentication'
-#     SqlUsername: 'demoadmin'
-#     SqlPassword: '$(user_password)'
-
 
   - ${{ if eq(parameters.deploy, true) }}:
     # Test applications
