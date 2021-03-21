@@ -768,7 +768,7 @@ stages:
             scriptLocation: inlineScript
             inlineScript: |
               $result = terraform -v | Select-String -Pattern '(?<version>[\d\.]+)'
-              $result.Matches[0].Groups['version'].Value | $(terraformDirectory)/.terraform-version
+              $result.Matches[0].Groups['version'].Value | Out-File $(terraformDirectory)/.terraform-version
             pwsh: true
             workingDirectory: '$(terraformDirectory)'
 
