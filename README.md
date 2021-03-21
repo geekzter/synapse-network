@@ -3,9 +3,12 @@
 This repo can be used to demonstrate performance of connectivity between various clients and Synapse in Azure. Queries are executed from these clients to simulate 'real world' performance experienced by users.
 Synapse Analytics (dedicated SQL pool formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
 
-![](visuals/overview.png "Overview")   
+[![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/synapse-terraform-apply-ci?branchName=main)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=82&branchName=main)
 
 <br/>
+
+![](visuals/overview.png "Overview")   
+
 
 ## Pre-requisites
 - To get started you need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS, [Homebrew](https://github.com/hashicorp/homebrew-tap) on macOS or [chocolatey](https://chocolatey.org/packages/terraform) on Windows)
