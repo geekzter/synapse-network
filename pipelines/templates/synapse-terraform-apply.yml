@@ -558,7 +558,7 @@ stages:
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
-            workingDirectory: '$(scriptDirectory)'
+            workingDirectory: '$(terraformDirectory)'
 
         # # Requires a Windows Pipeline agent
         # - task: SqlAzureDacpacDeployment@1
