@@ -20,9 +20,8 @@ function ImportDatabase (
         Write-Error "No SQL Server specified" -ForeGroundColor Red
         return 
     }
-    $sqlQueryFile = "check-database-contents.sql"
-    $sqlLoadFile = "load-data.sql"
-    $sqlFWRuleName = "AllowAllWindowsAzureIPs"
+    $sqlQueryFile = (Join-Path $PSScriptRoot "check-database-contents.sql")
+    $sqlLoadFile = (Join-Path $PSScriptRoot "load-data.sql")
  
     # https://aka.ms/azuresqlconnectivitysettings
     # Enable Public Network Access
