@@ -301,14 +301,14 @@ stages:
                 # Intermedite step required for Windows
                 $upperCaseName = $tfvar.Name + "_UC"
                 $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
-                Write-Host "`$env:$upperCaseName = `$env:$($tfvar.Name)"
-                Invoke-Expression "`$env:$upperCaseName = `$env:$($tfvar.Name)"
-                Write-Host "`$env:$($tfvar.Name) = `$null"
-                Invoke-Expression "`$env:$($tfvar.Name) = `$null"
-                Write-Host "`$env:$properCaseName = `$env:$($upperCaseName)"
-                Invoke-Expression "`$env:$properCaseName = `$env:$($upperCaseName)"
-                Write-Host "`$env:$upperCaseName = `$null"
-                Invoke-Expression "`$env:$upperCaseName = `$null"
+                New-Item -Path env:$upperCaseName -Value $tfVar.Value
+                # Invoke-Expression "`$env:$upperCaseName = `$env:$($tfvar.Name)"
+                Remove-Item -Path env:$($tfvar.Name)
+                # Invoke-Expression "`$env:$($tfvar.Name) = `$null"
+                New-Item -Path env:$properCaseName -Value $tfVar.Value
+                # Invoke-Expression "`$env:$properCaseName = `$env:$($upperCaseName)"
+                Remove-Item -Path env:$upperCaseName
+                # Invoke-Expression "`$env:$upperCaseName = `$null"
               } 
               # List environment variables
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,TF_* | Sort-Object -Property Name
@@ -432,8 +432,12 @@ stages:
               
               # Convert uppercased Terraform environment variables to their original casing expeted by Terraform
               foreach ($tfvar in $(Get-ChildItem -Path Env: -Recurse -Include TF_VAR_*)) {
-                  $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
-                  Invoke-Expression "`$env:$properCaseName = `$env:$($tfvar.Name)"  
+                $upperCaseName = $tfvar.Name + "_UC"
+                $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
+                Invoke-Expression "`$env:$upperCaseName = `$env:$($tfvar.Name)"
+                Invoke-Expression "`$env:$($tfvar.Name) = `$null"
+                Invoke-Expression "`$env:$properCaseName = `$env:$($upperCaseName)"
+                Invoke-Expression "`$env:$upperCaseName = `$null"
               } 
               # List environment variables
               Get-ChildItem -Path Env: -Recurse -Include ARM_*,AZURE_*,TF_* | Sort-Object -Property Name
