@@ -26,10 +26,6 @@ parameters:
   displayName: Deploy applications
   type: boolean
   default: true
-- name: deployIaaS
-  displayName: Deploy IaaS application
-  type: boolean
-  default: true
 - name: destroy
   displayName: Destroy infrastructure
   type: string
@@ -110,18 +106,9 @@ stages:
       value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform'
     ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
       value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/terraform'
-  - name: 'TF_VAR_deployment_name'
-    ${{ if eq(length(parameters.deploymentName),0) }}:
-      value: ${{ parameters.workspace }}
-    ${{ if gt(length(parameters.deploymentName),0) }}:
-      value: ${{ parameters.deploymentName }}
   - ${{ if gt(length(parameters.resourceSuffix),0) }}:
     - name: 'TF_VAR_resource_suffix'
       value: ${{ parameters.resourceSuffix }}
-  - name: 'iaasResourceGroup'
-    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-iaasapp-$(TF_VAR_resource_suffix)'
-  - name: 'paasResourceGroup'
-    value: '$(TF_VAR_resource_prefix)-$(TF_VAR_deployment_name)-paasapp-$(TF_VAR_resource_suffix)'
   - name: 'resourceGroup' 
     value: 'synapse-network-$(TF_VAR_resource_suffix)'
   - name: 'terraformVersionRequest'
@@ -182,7 +169,7 @@ stages:
           failOnStandardError: true
           workingDirectory: '$(terraformDirectory)'
 
-  - ${{ if or(eq(parameters.provision, true),eq(parameters.reprovision, true),eq(parameters.deploy, true),eq(parameters.deployIaaS, true)) }}:
+  - ${{ if or(eq(parameters.provision, true),eq(parameters.reprovision, true),eq(parameters.deploy, true)) }}:
     # Provision on self-hosted agent
     - job: 'Provision'
       dependsOn: 
@@ -275,10 +262,6 @@ stages:
             failOnStandardError: true
             powerShellIgnoreLASTEXITCODE: false
             workingDirectory: '$(scriptDirectory)'
-          env:
-            TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
-            TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
-            TF_VAR_default_update_timeout: '$(jobTimeOutMinutes)m'
 
         - task: AzureCLI@2
           displayName: 'Terraform init'
@@ -381,7 +364,6 @@ stages:
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
-        iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
         vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
         # Use earlier prepared Terraform config
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
@@ -468,9 +450,7 @@ stages:
             addSpnToEnvironment: true
             useGlobalConfig: true
             failOnStandardError: true
-            workingDirectory: '$(scriptDirectory)'
-          env:
-            TF_VAR_default_create_timeout: '$(jobTimeOutMinutes)m'
+            workingDirectory: '$(terraformDirectory)'
 
   - ${{ if eq(parameters.deploy, true) }}:
     # Deploy PaaS application 
@@ -502,7 +482,6 @@ stages:
         devOpsProject: $[ dependencies.Provision.outputs['terraform.devops_project'] ]
         dbaName: $[ dependencies.Provision.outputs['terraform.admin_login'] ]
         dbaObjectID: $[ dependencies.Provision.outputs['terraform.admin_object_id'] ]
-        paasResourceGroup: $[ dependencies.Provision.outputs['terraform.paas_app_resource_group'] ]
         storageUrl: 'https://ewimages.blob.core.windows.net/databasetemplates/vdcdevpaasappsqldb-2020-1-18-15-13.bacpac'
         storageSAS: '?st=2020-03-20T13%3A57%3A32Z&se=2023-04-12T13%3A57%3A00Z&sp=r&sv=2018-03-28&sr=c&sig=qGpAjJlpDQsq2SB6ev27VbwOtgCwh2qu2l3G8kYX4rU%3D'
         # Use earlier prepared Terraform config
@@ -559,8 +538,6 @@ stages:
             useGlobalConfig: true
             failOnStandardError: true
             workingDirectory: '$(scriptDirectory)'
-          env:
-            TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
 
         - pwsh: |
             Invoke-Webrequest -Uri "$(storageUrl)$(storageSAS)" -OutFile $(System.DefaultWorkingDirectory)/database.bacpac
@@ -614,207 +591,11 @@ stages:
             workingDirectory: '$(terraformDirectory)'
             failOnStandardError: true
 
-  - ${{ if eq(parameters.deployIaaS, true) }}:
-    # First things first, we need to check whether the environment is ready to deploy to
-    - job: 'DeployEnvironmentPrep'
-      dependsOn:
-        - Prepare
-        - Provision
-        - ${{ if eq(parameters.reprovision, true) }}:
-          - Reprovision
-      displayName: 'Prepare Environment'
-      condition: succeeded()
-      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
-
-      variables:
-        iaasResourceGroup: $[ dependencies.Provision.outputs['terraform.iaas_app_resource_group'] ]
-        resourceSuffix:  $[ dependencies.Provision.outputs['terraform.resource_suffix'] ]
-        timeOutSeconds: 1200
-
-      pool:
-        # SqlAzureDacpacDeployment@1 only runs on Windows
-        vmImage: 'ubuntu-latest'
-
-      steps:
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
-          - download: ${{parameters.vdcArtifactPipeline}}
-            artifact: $(vdcArtifactName)
-    
-        - pwsh: |
-            Write-Host "Hello Task"
-          displayName: 'Test task'
-          enabled: ${{ parameters.testMode }}
-
-        # If applications are deployed, wait for environment agents to come online
-        # Requires Project Collection Build Service reader access to Environment
-        - task: AzureCLI@2
-          name: waitforagents
-          displayName: 'Wait for environment agents to come online'
-          enabled: false # ${{ not(parameters.testMode) }}
-          inputs:
-            azureSubscription: '$(subscriptionConnection)'
-            scriptType: pscore
-            scriptLocation: inlineScript
-            inlineScript: |
-              $global:InformationPreference = "Continue"
-              $global:VerbosePreference = "Continue"
-              #$(scriptDirectory)/wait_for_agents.ps1 -ResourceGroup $(iaasResourceGroup) -TimeoutSeconds $(timeOutSeconds)
-              $(scriptDirectory)/wait_for_agents.ps1 -Environment ${{ parameters.workspace }} -OrganizationUrl $(System.TeamFoundationCollectionUri) -Project $(System.TeamProject) -Tags $(agentTag),$(resourceSuffix) -TimeoutSeconds $(timeOutSeconds)
-            useGlobalConfig: true
-            failOnStandardError: true
-            workingDirectory: '$(scriptDirectory)'
-          env:
-            # Use Pipeline token to access Azure DevOps
-            AZURE_DEVOPS_EXT_PAT: '$(System.AccessToken)'
-
-  - ${{ if eq(parameters.deployIaaS, true) }}:
-    - deployment: 'DeployEnvironment'
-      dependsOn:
-        - Prepare
-        - Provision
-        - DeployEnvironmentPrep
-        - ${{ if eq(parameters.reprovision, true) }}:
-          - Reprovision
-      displayName: 'Deploy IaaS Application'
-      condition: succeeded()
-      timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
-
-      variables:
-        appArtifactDirectory: '$(Pipeline.Workspace)/aspnet'
-        appScriptsDirectory: '$(Pipeline.Workspace)/aspnetscripts'
-        appPackage: '$(appArtifactDirectory)/SampleIisWebApp.zip'
-        resourceSuffix: $[ dependencies.Provision.outputs['terraform.resource_suffix'] ]
-
-      ${{ if eq(parameters.testMode, true) }}:
-        pool:
-          vmImage: 'ubuntu-latest'      
-
-      ${{ if eq(parameters.testMode, true) }}:
-        environment:
-          name: '${{ parameters.workspace }}'
-
-      ${{ if eq(parameters.testMode, false) }}:
-        environment:
-          name: '${{ parameters.workspace }}'
-          resourceType: virtualMachine
-          # BUG: Only literals are allowed
-          # https://docs.microsoft.com/en-us/azure/devops/pipelines/yaml-schema?view=azure-devops&tabs=schema%2Cparameter-schema#environment
-          # tags: string | [ string ] # tag names to filter the resources in the environment
-          # tags: $(agentTag) $(resourceSuffix)
-          tags: web
-
-      strategy:
-        runOnce:
-          deploy:
-            steps:
-            - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
-              - download: ${{parameters.vdcArtifactPipeline}}
-                artifact: $(vdcArtifactName)
-    
-            - pwsh: |
-                Write-Host "Hello Task"
-                Write-Host "Tags: $(agentTag), $(resourceSuffix)"
-              displayName: 'Test task'
-              enabled: ${{ parameters.testMode }}
-
-            # Download IaaS Application Pipeline artifacts
-            # This consumes artifacts published by this pipeline:
-            # https://github.com/geekzter/azure-vdc/blob/master/pipelines/iis-asp.net-ci.yml
-            - task: DownloadPipelineArtifact@2
-              displayName: 'Download ASP.NET Core App Artifacts'
-              enabled: false # ${{ not(parameters.testMode) }}
-              inputs:
-                buildType: 'specific'
-                project: '$(appArtifectProject)'
-                definition: '$(appBuildDefinitionIaaS)'
-                specificBuildWithTriggering: true
-                buildVersionToDownload: 'latest'
-                artifactName: 'aspnet'
-                downloadPath: '$(appArtifactDirectory)'
-            - task: DownloadBuildArtifacts@0
-              displayName: 'Download ASP.NET Core App Artifacts'
-              enabled: false
-              inputs:
-                buildType: 'specific'
-                project: '$(appArtifectProject)'
-                definition: '$(appBuildDefinitionIaaS)'
-                specificBuildWithTriggering: true
-                buildVersionToDownload: 'latest'
-                artifactName: 'aspnet'
-                downloadPath: '$(appArtifactDirectory)'
-            - task: DownloadPipelineArtifact@2
-              displayName: 'Download Scripts'
-              enabled: false # ${{ not(parameters.testMode) }}
-              inputs:
-                buildType: 'specific'
-                project: '$(appArtifectProject)'
-                definition: '$(appBuildDefinitionIaaS)'
-                specificBuildWithTriggering: true
-                buildVersionToDownload: 'latest'
-                artifactName: 'aspnetscripts'
-                downloadPath: '$(appScriptsDirectory)'
-            - task: DownloadBuildArtifacts@0
-              displayName: 'Download Scripts'
-              enabled: false
-              inputs:
-                buildType: 'specific'
-                project: '$(appArtifectProject)'
-                definition: '$(appBuildDefinitionIaaS)'
-                specificBuildWithTriggering: true
-                buildVersionToDownload: 'latest'
-                artifactName: 'aspnetscripts'
-                downloadPath: '$(appScriptsDirectory)'
-
-            # Configure IIS on VM's
-            - task: IISWebAppManagementOnMachineGroup@0
-              displayName: 'Configure IIS App'
-              enabled: false # ${{ not(parameters.testMode) }}
-              inputs:
-                EnableIIS: true
-                WebsiteName: 'Default Web Site'
-                AddBinding: true
-                Bindings: '{"bindings":[{"protocol":"http","ipAddress":"All Unassigned","port":"80","hostname":"","sslThumbprint":"","sniFlag":false}]}'
-                CreateOrUpdateAppPoolForWebsite: true
-                AppPoolNameForWebsite: DemoAppPool
-                AppCmdCommands: |
-                  start apppool /apppool.name:DemoAppPool
-                  set config /section:defaultDocument "/~files" 
-                  set config /section:defaultDocument "/+files.[@start,value='default.aspx']"          
-
-            - task: IISWebAppDeploymentOnMachineGroup@0
-              displayName: 'Deploy IIS App'
-              enabled: false # ${{ not(parameters.testMode) }}
-              inputs:
-                WebSiteName: 'Default Web Site'
-                Package: '$(appPackage)'
-                TakeAppOfflineFlag: true
-
-            - powershell: |
-                Invoke-WebRequest -Uri http://127.0.0.1/default.aspx -UseBasicParsing
-              errorActionPreference: continue
-              displayName: 'Initial Warmup'
-              enabled: false
-
-            - task: CopyFiles@2
-              displayName: 'Copy Warmup Scripts'
-              enabled: false # ${{ not(parameters.testMode) }}
-              inputs:
-                SourceFolder: '$(appScriptsDirectory)'
-                TargetFolder: 'C:\Users\Public\Documents'
-
-            - task: BatchScript@1
-              displayName: 'Schedule Warmup Scripts'
-              enabled: false # ${{ not(parameters.testMode) }}
-              inputs:
-                filename: '$(appScriptsDirectory)/schedule-warmup.cmd'
-
   - ${{ if eq(parameters.deploy, true) }}:
     # Test applications
     - job: 'Test'
       dependsOn:
         - Deploy
-        - ${{ if eq(parameters.deployIaaS, true) }}:
-          - DeployEnvironment
         - Provision
         - ${{ if eq(parameters.reprovision, true) }}:
           - Reprovision
@@ -846,22 +627,6 @@ stages:
             Write-Host "Hello Task"
           displayName: 'Test task'
           enabled: ${{ parameters.testMode }}
-
-        # Test IaaS Application
-        - task: PowerShell@2
-          displayName: 'Test IaaS Application'
-          enabled: ${{ and(not(parameters.testMode),parameters.deployIaaS) }}
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Wait for the WAF to get ready
-              Start-Sleep -Seconds 10
-              
-              # Request page
-              Write-Host "Requesting $(iaasAppUrl)..."
-              Invoke-WebRequest -Uri $(iaasAppUrl) -MaximumRetryCount 9
-            failOnStderr: true
-            pwsh: true
 
         # Test PaaS Application
         - task: PowerShell@2
@@ -913,8 +678,6 @@ stages:
         - Prepare
         - ${{ if or(eq(parameters.provision, true),eq(parameters.deploy, true)) }}:
           - Provision
-        - ${{ if eq(parameters.deployIaaS, true) }}:
-          - DeployEnvironment
         - ${{ if eq(parameters.deploy, true) }}:
           - Deploy
           - Test
@@ -1018,8 +781,6 @@ stages:
             useGlobalConfig: true
             failOnStandardError: true
             workingDirectory: '$(terraformDirectory)'
-          env:
-            TF_VAR_default_delete_timeout: '$(jobTimeOutMinutes)m'
 
         # When using tfenv, this will make sure the same Terraform version will be used as we tested in this pipeline
         - task: PowerShell@2
