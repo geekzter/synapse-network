@@ -55,7 +55,7 @@ function Execute-SqlCmd (
     Write-Host "Retrieving ${RowCount} rows..."
     Write-Host "${sqlRunCommand} -P `<password`>" -ForegroundColor Green
     $stopwatch = [system.diagnostics.stopwatch]::StartNew()
-    Invoke-Expression "${sqlRunCommand} -P ${sqlPassword}"
+    Invoke-Expression "${sqlRunCommand} -P '${sqlPassword}'"
     $stopwatch.Stop()
     $stopWatch | Out-File $outputFile -Append
     $errors = (Get-Content $outputFile | Select-String "Error:")
