@@ -125,6 +125,8 @@ stages:
       value: true
     ${{ if eq(parameters.destroy, 'On success') }}:
       value: false
+  - name: vmImage
+    value: 'ubuntu-latest'
 
   jobs:
   - job: 'Prepare'
@@ -133,7 +135,7 @@ stages:
     timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
     pool:
-      vmImage: 'ubuntu-latest'
+      vmImage: '$(vmImage)'
 
     workspace:
       clean: all
@@ -184,7 +186,7 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        vmImage: '$(vmImage)'
 
       workspace:
         clean: all
@@ -369,7 +371,7 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        vmImage: '$(vmImage)'
 
       steps:
         - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
@@ -494,7 +496,7 @@ stages:
 
       pool:
         # SqlAzureDacpacDeployment@1 only runs on Windows
-        vmImage: 'ubuntu-latest'
+        vmImage: '$(vmImage)'
 
       steps:
         - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
@@ -596,6 +598,27 @@ stages:
             workingDirectory: '$(terraformDirectory)'
             failOnStandardError: true
 
+# - task: SqlAzureDacpacDeployment@1
+#   inputs:
+#     azureSubscription: 'internal-azure-subscription'
+#     AuthenticationType: 'aadAuthenticationIntegrated'
+#     ServerName: 'synapse-network-default-wuvn-sqldwserver'
+#     DatabaseName: 'synapse-network-default-wuvn-sqldw'
+#     deployType: 'SqlTask'
+#     SqlFile: '$(Build.SourcesDirectory)/scripts/load-data.sql'
+#     IpDetectionMethod: 'AutoDetect'
+
+# - task: SqlDacpacDeploymentOnMachineGroup@0
+#   inputs:
+#     TaskType: 'sqlQuery'
+#     SqlFile: '$(Build.SourcesDirectory)/scripts/load-data.sql'
+#     ServerName: 'synapse-network-default-wuvn-sqldwserver'
+#     DatabaseName: 'synapse-network-default-wuvn-sqldw'
+#     AuthScheme: 'sqlServerAuthentication'
+#     SqlUsername: 'demoadmin'
+#     SqlPassword: '$(user_password)'
+
+
   - ${{ if eq(parameters.deploy, true) }}:
     # Test applications
     - job: 'Test'
@@ -621,7 +644,7 @@ stages:
           apimDemoKey: $[ dependencies.Reprovision.outputs['terraform.apim_demo_api_key'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        vmImage: '$(vmImage)'
 
       steps:
         - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
@@ -702,7 +725,7 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        vmImage: '$(vmImage)'
 
       steps:
         - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
@@ -830,7 +853,7 @@ stages:
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
       pool:
-        vmImage: 'ubuntu-latest'
+        vmImage: '$(vmImage)'
 
       workspace:
         clean: all
