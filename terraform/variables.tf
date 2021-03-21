@@ -8,9 +8,23 @@ variable azure_region {
   default      = "westeurope" # Amsterdam
 }
 
+variable azure_alternate_region {
+  type         = string
+  default      = null
+}
+
 variable azure_sql_dwh_dwu {
   type         = string
   default      = "DW100c"
+}
+
+variable resource_suffix {
+  description  = "The suffix to put at the of resource names created"
+  default      = "" # Empty string triggers a random suffix
+}
+variable run_id {
+  type         = string
+  default      = ""
 }
 
 variable deploy_network {
@@ -65,6 +79,11 @@ variable ssh_private_key {
 variable ssh_public_key {
   type         = string
   default      = "~/.ssh/id_rsa.pub"
+}
+
+variable use_managed_identity {
+  type         = bool
+  default      = false
 }
 
 variable user_name {

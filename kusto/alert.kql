@@ -2,7 +2,8 @@ AppRequests
 | join (AppTraces
     | where Message == "RunResult"
     | project OperationId, RowsRequested=Properties['RowsRequested'], RowsRetrieved=Properties['RowsRetrieved']) on OperationId
-| project TimeGenerated, OperationId, OperationName, Success, ResultCode, DurationMs, RowsRequested, RowsRetrieved, AppRoleName
+| extend Region=split(AppRoleName,"-")[4]
+| project TimeGenerated, OperationId, OperationName, Success, ResultCode, DurationMs, RowsRequested, RowsRetrieved, AppRoleName, Region
 | where TimeGenerated > ago(30d)
-| where AppRoleName contains_cs 'synapse' and OperationName =~ 'GetRows' and DurationMs > 40000
+| where AppRoleName == '${function_name}' and OperationName =~ 'GetRows' and DurationMs > 40000
 | order by TimeGenerated desc

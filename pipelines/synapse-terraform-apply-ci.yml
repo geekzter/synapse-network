@@ -1,0 +1,91 @@
+# This pipeline performs a full CI test:
+#  - Provision infrastructure
+#  - Deploy application
+#  - Test application
+#  - Destroy infrastructure
+parameters:
+- name: workspace
+  displayName: Pipeline Environment / Terraform Workspace
+  type: string
+  default: ci
+  values:
+  - ci
+  - ci1
+  - ci2
+  - ci3
+- name: inherit
+  displayName: Inherit state
+  type: boolean
+  default: false
+- name: deploy
+  displayName: Deploy applications
+  type: boolean
+  default: false
+- name: destroy
+  displayName: Destroy infrastructure
+  type: string
+  default: Always
+  values:
+  - Always
+  - Never
+  - 'On failure'
+  - 'On success'
+- name: unpinTerraform
+  displayName: Unpin Terraform version
+  type: boolean
+  default: false
+- name: unpinTerraformProviders
+  displayName: Unpin Terraform provider versions
+  type: boolean
+  default: false
+- name: testMode
+  displayName: Test Mode (disable most tasks)
+  type: boolean
+  default: false
+
+trigger: none
+
+pr:
+  branches:
+    include:
+    - '*'
+  paths:
+    exclude:
+    - '.devcontainer/*'  
+    - '*.md'  
+    - '*.png'  
+    - '*.svg'  
+    - '*.vsdx'  
+
+schedules:
+- cron: '0 1 * * *'
+  displayName: 'Nightly build (UTC)'
+  # Run if there are no changes
+  always: 'true'
+  branches:
+    include:
+    - main
+
+variables:
+- template: ./templates/synapse-terraform-apply.variables.yml
+  # This pipeline assumes TF_VAR_* variables are defined in Variable Groups defined in Library
+- group: 'synapse-ci'
+- name: 'TF_VAR_run_id'
+  value: '$(Build.BuildId)'
+- name: 'TF_VAR_resource_suffix'
+  value: 'b$(Build.BuildId)'
+
+stages:
+- template: ./templates/synapse-terraform-apply.yml
+  parameters:
+    name: 'CI'
+    displayName: 'Provision, Deploy, Tear down'
+    inherit: ${{ parameters.inherit }}
+    provision: true
+    reprovision: false
+    deploy: ${{ parameters.deploy }}
+    destroy: ${{ parameters.destroy }}
+    testMode: ${{ parameters.testMode }}
+    unpinTerraform: ${{ parameters.unpinTerraform }}
+    unpinTerraformProviders: ${{ parameters.unpinTerraformProviders }}
+    workspace: ${{ parameters.workspace }}

@@ -11,17 +11,32 @@ if (!(Get-Command func -ErrorAction SilentlyContinue)) {
     Write-Warning "Azure Function Tools not found, exiting..."
     exit
 }
+if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) {
+    Write-Warning ".NET (Core) SDK not found, exiting..."
+    exit
+}
 
 try {
     $tfdirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "terraform")
     Push-Location $tfdirectory
     
-    $functionName = (GetTerraformOutput "function_name")  
+    $functionNames = (GetTerraformOutput -OutputVariable "function_name" -ComplexType)  
+    if (!($functionNames)) {
+        Write-Warning "Azure Function not found, has infrastructure been provisioned?"
+        exit
+    }
 
     $functionDirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "functions")
     Push-Location $functionDirectory
 
-    func azure functionapp publish $functionName -b local --list-included-files
+    # Reverse the list, so we process the main region last and locally fetched settings point to that region
+    [array]::Reverse($functionNames)
+    foreach ($functionName in $functionNames) {
+        Write-Host "`nFetching settings for function ${functionName}..."
+        func azure functionapp fetch-app-settings $functionName
+        Write-Host "`nPublishing to function ${functionName}..."
+        func azure functionapp publish $functionName -b local
+    }
     Pop-Location
 } finally {
     Pop-Location

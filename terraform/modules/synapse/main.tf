@@ -1,9 +1,9 @@
 locals {
+  connection_string_legacy     = "Server=tcp:${azurerm_sql_server.sql_dwh.fully_qualified_domain_name },1433;Initial Catalog=${azurerm_sql_database.sql_dwh.name};Persist Security Info=False;User ID=${var.user_name};Password=${var.user_password};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+  connection_string_msi        = "Server=tcp:${azurerm_sql_server.sql_dwh.fully_qualified_domain_name },1433;Database=${azurerm_sql_database.sql_dwh.name};"
+  connection_string            = var.grant_database_access ? local.connection_string_msi : local.connection_string_legacy
   publicip                     = chomp(data.http.localpublicip.body)
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
-  subnet_name                  = var.create_network_resources ? element(split("/",var.subnet_id),length(split("/",var.subnet_id))-1) : null
-  virtual_network_id           = var.create_network_resources ? replace(var.subnet_id,"/subnets/${local.subnet_name}","") : null
-  virtual_network_name         = var.create_network_resources ? element(split("/",local.virtual_network_id),length(split("/",local.virtual_network_id))-1) : null
 }
 
 data azurerm_client_config current {}
@@ -139,44 +139,14 @@ resource azurerm_monitor_diagnostic_setting sql_dwh_logs {
   } 
 }
 
-resource azurerm_private_dns_zone sql_dns_zone {
-  name                         = "privatelink.database.windows.net"
-  resource_group_name          = var.resource_group_name
-
-  tags                         = data.azurerm_resource_group.rg.tags
-
-  count                        = var.create_network_resources ? 1 : 0
-}
-
-resource azurerm_private_dns_zone_virtual_network_link sql {
-  name                         = "${local.virtual_network_name}-sql-link"
-  resource_group_name          = var.resource_group_name
-  private_dns_zone_name        = azurerm_private_dns_zone.sql_dns_zone[0].name
-  virtual_network_id           = local.virtual_network_id
-
-  count                        = var.create_network_resources ? 1 : 0
-}
-
-resource azurerm_private_endpoint sql_dwh_endpoint {
-  name                         = "${azurerm_sql_database.sql_dwh.name}-endpoint"
-  resource_group_name          = var.resource_group_name
-  location                     = var.region
-  
-  subnet_id                    = var.subnet_id
-
-  private_dns_zone_group {
-    name                       = azurerm_private_dns_zone.sql_dns_zone[0].name
-    private_dns_zone_ids       = [azurerm_private_dns_zone.sql_dns_zone[0].id]
+resource null_resource grant_sql_access {
+  # Add App Service MSI and DBA to Database
+  provisioner "local-exec" {
+    command                    = "../scripts/grant_database_access.ps1 -MSIName ${var.user_assigned_identity_name} -SqlDatabaseName ${azurerm_sql_database.sql_dwh.name} -SqlServerFQDN ${azurerm_sql_server.sql_dwh.fully_qualified_domain_name}"
+    interpreter                = ["pwsh", "-nop", "-Command"]
   }
 
-  private_service_connection {
-    is_manual_connection       = false
-    name                       = "${azurerm_sql_server.sql_dwh.name}-endpoint-connection"
-    private_connection_resource_id = azurerm_sql_server.sql_dwh.id
-    subresource_names          = ["sqlServer"]
-  }
-
-  tags                         = data.azurerm_resource_group.rg.tags
-
-  count                        = var.create_network_resources ? 1 : 0
- }
+  count                        = var.grant_database_access ? 1 : 0
+  # Terraform change scripts require Terraform to be the AAD DBA
+  depends_on                   = [azurerm_sql_active_directory_administrator.dba]
+}

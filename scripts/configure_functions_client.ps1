@@ -16,12 +16,34 @@ try {
     $tfdirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "terraform")
     Push-Location $tfdirectory
     
-    $functionName = (GetTerraformOutput "function_name")  
+    $connectionString = (GetTerraformOutput "connection_string_legacy")  
+    if (!($connectionString)) {
+        Write-Warning "Connection string not in Terraform output, has Synapse been provisioned yet?"
+        exit
+    }
+    $functionNames = (GetTerraformOutput -OutputVariable "function_name" -ComplexType)  
+    if (!($functionNames)) {
+        Write-Warning "Azure Function not found, has infrastructure been provisioned?"
+        exit
+    }
 
     $functionDirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "functions")
     Push-Location $functionDirectory
 
+    $functionName = $functionNames[0] # First item is main region
+    Write-Host "`nFetching settings for function ${functionName}..."
     func azure functionapp fetch-app-settings $functionName
+
+    $localSettingsFile = (Join-Path $functionDirectory "local.settings.json")
+    if (Test-Path $localSettingsFile) {
+        $localSettings = (Get-Content ./local.settings.json | ConvertFrom-Json -AsHashtable)
+        $localSettings.Values.Remove("APP_CLIENT_ID")
+        $localSettings.Values["SYNAPSE_CONNECTION_STRING"] = $connectionString
+        $localSettings | ConvertTo-Json | Out-File $localSettingsFile
+    } else {
+        Write-Warning "${localSettingsFile} not found"
+    }
+    
     Pop-Location
 } finally {
     Pop-Location

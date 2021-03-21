@@ -1,6 +1,7 @@
 AzureDiagnostics 
 | where Category == "ExecRequests"
 | where Status_s == "Completed" 
-| project TimeGenerated, Command_s, OperationId=replace("-","",Label_g), Duration=EndTime_t-StartTime_t
+| extend Duration=EndTime_t-StartTime_t
+| extend OperationId=replace("-","",Label_g)
 | where TimeGenerated > ago(30d) and Duration > totimespan(0) and isnotempty(OperationId)
 | order by TimeGenerated desc

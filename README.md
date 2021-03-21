@@ -1,10 +1,14 @@
 # Testing Synapse Analytics Network Performance
 
 This repo can be used to demonstrate performance of connectivity between various clients and Synapse in Azure. Queries are executed from these clients to simulate 'real world' performance experienced by users.
-Synapse Analytics (formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
+Synapse Analytics (dedicated SQL pool formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
 
+[![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/synapse-terraform-apply-ci?branchName=main)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=82&branchName=main)
 
 <br/>
+
+![](visuals/overview.png "Overview")   
+
 
 ## Pre-requisites
 - To get started you need [Git](https://git-scm.com/), [Terraform](https://www.terraform.io/downloads.html) (to get that I use [tfenv](https://github.com/tfutils/tfenv) on Linux & macOS, [Homebrew](https://github.com/hashicorp/homebrew-tap) on macOS or [chocolatey](https://chocolatey.org/packages/terraform) on Windows)
@@ -66,18 +70,18 @@ Terraform input variable`deploy_azure_client` should be set to `true` when provi
 ```
 terraform output user_name
 terraform output user_password
-terraform output azure_windows_vm_public_ip_address
+terraform output windows_vm_public_ip_address
 ```
-You can also use the generated file at data/default/azure-client.rdp.   
+You can also use the generated file at data/default/azure-[region]-client.rdp.   
 Connect to Synapse Analytics using SQL Server Management Studio. The Synapse Analytics credentials are the same as for the VM. The FQDN can be fetched using:
 ```
-terraform output azure_sql_dwh_fqdn
+terraform output sql_dwh_fqdn
 ```
 The VM will already have SQL Server Management Studio installed, and the Virtual Network is configured to use the Private Endpoint of Synapse Analytics. Within SQL Server Management Studio, run a query e.g.
 ```
-select top 100000000 * from dbo.Trip
+select top 100000000 * from dbo.Trip option (label = 'mylabel')
 ```
-This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam). Using the public endpoint instead of S2S VPN and private endpoint yields the same results, both paths are taking a direct route.  
+This query simulates an ETL of 100M rows and completes in ~ 30 minutes, when executed from AWS Ireland to Synapse Analytics with DW100c in Azure West Europe (Amsterdam). Using the public endpoint instead of S2S VPN and private endpoint yields the same results, both paths are taking a direct route. Specifying a label helps identity this query in [Dynamic Management Views](https://docs.microsoft.com/en-us/sql/relational-databases/system-dynamic-management-views/sys-dm-pdw-exec-requests-transact-sql) .
 
 <p align="center">
 <img src="visuals/100m.png">
@@ -116,7 +120,7 @@ You can of course run this anywhere you like, provided you have PowerShell and s
 
 ### Timer Azure Function
 For intermittent performance issue's, it is valuable to measure query times on a regular schedule and capture the results. 
-<p align="center"><img src="visuals/function.png" width="75%" align="middle"></p>
+<p align="center"><img src="visuals/function.png" width="50%" align="middle"></p>
 
 This repo includes an Azure function named [GetRows](functions/GetRows.cs) with a timer trigger (i.e. no HTTP endpoint) and uses [Virtual Network Integration](https://docs.microsoft.com/en-us/azure/azure-functions/functions-networking-options#virtual-network-integration) to connect to the Synapse Analytics Private Endpoint.
 Terraform input variable `deploy_serverless` should be set to `true` when provisioning infrastructure. After provisioning, either run `deploy_function.ps1` or use the function tools to publish the Azure Function:     
@@ -158,7 +162,6 @@ AppRequests
 You can also join the metrics from both Application Insights with ExecRequests configured to be logged to Log Analytics. This provides end-to-end and Synapse query time in a single view:
 ```
 AppRequests
-AppRequests
 | join (AppTraces
     | where Message == "RunResult"
     | project OperationId, RowsRequested=Properties['RowsRequested'], RowsRetrieved=Properties['RowsRetrieved']) on OperationId
@@ -168,7 +171,8 @@ AppRequests
 | extend FunctionDuration=DurationMs*1ms
 | extend FunctionDurationSeconds=DurationMs/1000
 | extend SqlDurationSeconds=SqlDuration/1s
-| project TimeGenerated, OperationId, OperationName, Success, ResultCode, FunctionDurationSeconds, FunctionDuration, SqlDurationSeconds, SqlDuration, RowsRequested, RowsRetrieved, AppRoleName
+| extend Region=split(AppRoleName,"-")[4]
+| project TimeGenerated, OperationId, OperationName, Success, ResultCode, FunctionDurationSeconds, FunctionDuration, SqlDurationSeconds, SqlDuration, RowsRequested, RowsRetrieved, AppRoleName, Region
 | where TimeGenerated > ago(30d)
 | where AppRoleName contains_cs 'synapse' and OperationName =~ 'GetRows'
 | order by TimeGenerated desc

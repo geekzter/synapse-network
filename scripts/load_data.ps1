@@ -20,9 +20,8 @@ function ImportDatabase (
         Write-Error "No SQL Server specified" -ForeGroundColor Red
         return 
     }
-    $sqlQueryFile = "check-database-contents.sql"
-    $sqlLoadFile = "load-data.sql"
-    $sqlFWRuleName = "AllowAllWindowsAzureIPs"
+    $sqlQueryFile = (Join-Path $PSScriptRoot "check-database-contents.sql")
+    $sqlLoadFile = (Join-Path $PSScriptRoot "load-data.sql")
  
     # https://aka.ms/azuresqlconnectivitysettings
     # Enable Public Network Access
@@ -71,16 +70,15 @@ try {
         $Private:ErrorActionPreference = "Continue"
 
         # Set only if null
-        $script:ResourceGroup          ??= (GetTerraformOutput "azure_resource_group_name")
-        $script:SqlDatabaseName        ??= (GetTerraformOutput "azure_sql_dwh_pool_name")
-        $script:SqlServer              ??= (GetTerraformOutput "paas_app_sql_server")
-        $script:SqlServerFQDN          ??= (GetTerraformOutput "azure_sql_dwh_fqdn")
+        $script:ResourceGroup          ??= (GetTerraformOutput "resource_group_name")
+        $script:SqlDatabaseName        ??= (GetTerraformOutput "sql_dwh_pool_name")
+        $script:SqlServerFQDN          ??= (GetTerraformOutput "sql_dwh_fqdn")
         $script:SqlPassword            ??= (GetTerraformOutput "user_password")
         $script:SqlUser                ??= (GetTerraformOutput "user_name")
     }
 
     if ([string]::IsNullOrEmpty($SqlDatabaseName)) {
-        Write-Host "Synapse SQL Pool has not been created, nothing to do deploy to" -ForeGroundColor Yellow
+        Write-Warning "Synapse SQL Pool has not been created, nothing to do deploy to"
         exit 
     }
 } finally {

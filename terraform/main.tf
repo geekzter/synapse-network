@@ -14,12 +14,13 @@ locals {
   password                     = ".Az9${random_string.password.result}"
   publicip                     = chomp(data.http.localpublicip.body)
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
-  suffix                       = random_string.suffix.result
+  suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result  
   tags                         = map(
     "application",               "Synapse Performance",
     "environment",               "dev",
     "provisioner",               "terraform",
-    "repository",                "aws-azure-vpn",
+    "repository",                "synapse-performance",
+    "runid",                     var.run_id,
     "suffix",                    local.suffix,
     "workspace",                 terraform.workspace
   )
@@ -65,7 +66,7 @@ resource azurerm_user_assigned_identity client_identity {
 
 
 resource azurerm_resource_group synapse {
-  name                         = "synapse-network-performance-${terraform.workspace}-${local.suffix}"
+  name                         = "synapse-network-${terraform.workspace}-${local.suffix}"
   location                     = var.azure_region
 
   tags                         = local.tags
@@ -93,4 +94,11 @@ resource azurerm_storage_container scripts {
   name                         = "scripts"
   storage_account_name         = azurerm_storage_account.automation_storage.name
   container_access_type        = "container"
+}
+
+resource azurerm_private_dns_zone sql_dns_zone {
+  name                         = "privatelink.database.windows.net"
+  resource_group_name          = azurerm_resource_group.synapse.name
+
+  tags                         = azurerm_resource_group.synapse.tags
 }

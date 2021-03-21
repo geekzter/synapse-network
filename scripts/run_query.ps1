@@ -55,7 +55,7 @@ function Execute-SqlCmd (
     Write-Host "Retrieving ${RowCount} rows..."
     Write-Host "${sqlRunCommand} -P `<password`>" -ForegroundColor Green
     $stopwatch = [system.diagnostics.stopwatch]::StartNew()
-    Invoke-Expression "${sqlRunCommand} -P ${sqlPassword}"
+    Invoke-Expression "${sqlRunCommand} -P '${sqlPassword}'"
     $stopwatch.Stop()
     $stopWatch | Out-File $outputFile -Append
     $errors = (Get-Content $outputFile | Select-String "Error:")
@@ -79,13 +79,13 @@ try {
     Push-Location $tfdirectory
     
     if (!$ResourceGroup) {
-        $ResourceGroup = (GetTerraformOutput "azure_resource_group_name")  
+        $ResourceGroup = (GetTerraformOutput "resource_group_name")  
     }
     if (!$SqlDatabaseName) {
-        $SqlDatabaseName = (GetTerraformOutput "azure_sql_dwh_pool_name")  
+        $SqlDatabaseName = (GetTerraformOutput "sql_dwh_pool_name")  
     }
     if (!$SqlServerFQDN) {
-        $SqlServerFQDN = (GetTerraformOutput "azure_sql_dwh_fqdn")  
+        $SqlServerFQDN = (GetTerraformOutput "sql_dwh_fqdn")  
     }
     if (!$SqlUser) {
         $SqlUser = (GetTerraformOutput "user_name")  
