@@ -303,8 +303,8 @@ stages:
                 $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
                 Write-Host "`$env:$upperCaseName = `$env:$($tfvar.Name)"
                 Invoke-Expression "`$env:$upperCaseName = `$env:$($tfvar.Name)"
-                Write-Host "$env:${tfvar.Name} = `$null"
-                Invoke-Expression "$env:${tfvar.Name} = `$null"
+                Write-Host "`$env:$($tfvar.Name) = `$null"
+                Invoke-Expression "`$env:$($tfvar.Name) = `$null"
                 Write-Host "`$env:$properCaseName = `$env:$($upperCaseName)"
                 Invoke-Expression "`$env:$properCaseName = `$env:$($upperCaseName)"
                 Write-Host "`$env:$upperCaseName = `$null"
