@@ -102,7 +102,7 @@ resource azurerm_private_endpoint sql_server_endpoint {
 
   tags                         = data.azurerm_resource_group.rg.tags
 
-  count                        = var.create_sql_server_endpoint && var.sql_server_id != null ? 1 : 0
+  count                        = var.create_sql_server_endpoint ? 1 : 0
 }
 
 
