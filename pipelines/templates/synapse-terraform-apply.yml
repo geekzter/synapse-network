@@ -71,7 +71,7 @@ parameters:
   displayName: Unpin Terraform provider versions
   type: boolean
   default: false
-- name: vdcArtifactPipeline
+- name: infraArtifactPipeline
   displayName: Pipeline (alias) for artifacts
   type: string
   default: ''
@@ -88,24 +88,24 @@ stages:
   variables:
   - name: 'agentTag'
     value: 'web'
-  - name: 'vdcArtifactName'
+  - name: 'artifactName'
     value: 'drop'
   - name: 'TF_WORKSPACE'
     value: ${{ parameters.workspace }}
   - name: 'scriptDirectory'
-    ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+    ${{ if eq(length(parameters.infraArtifactPipeline),0) }}:
       value: '$(Build.SourcesDirectory)/scripts'
-    ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
-      value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/scripts'
-    ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
-      value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/scripts'
+    ${{ if and(gt(length(parameters.infraArtifactPipeline),0),ne(parameters.infraArtifactPipeline,'current')) }}:
+      value: '$(Pipeline.Workspace)/${{parameters.infraArtifactPipeline}}/$(artifactName)/s/scripts'
+    ${{ if eq(parameters.infraArtifactPipeline,'current') }}:
+      value: '$(Pipeline.Workspace)/$(artifactName)/s/scripts'
   - name: 'terraformDirectory'
-    ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+    ${{ if eq(length(parameters.infraArtifactPipeline),0) }}:
       value: '$(Build.SourcesDirectory)/terraform'
-    ${{ if and(gt(length(parameters.vdcArtifactPipeline),0),ne(parameters.vdcArtifactPipeline,'current')) }}:
-      value: '$(Pipeline.Workspace)/${{parameters.vdcArtifactPipeline}}/$(vdcArtifactName)/s/terraform'
-    ${{ if eq(parameters.vdcArtifactPipeline,'current') }}:
-      value: '$(Pipeline.Workspace)/$(vdcArtifactName)/s/terraform'
+    ${{ if and(gt(length(parameters.infraArtifactPipeline),0),ne(parameters.infraArtifactPipeline,'current')) }}:
+      value: '$(Pipeline.Workspace)/${{parameters.infraArtifactPipeline}}/$(artifactName)/s/terraform'
+    ${{ if eq(parameters.infraArtifactPipeline,'current') }}:
+      value: '$(Pipeline.Workspace)/$(artifactName)/s/terraform'
   - ${{ if gt(length(parameters.resourceSuffix),0) }}:
     - name: 'TF_VAR_resource_suffix'
       value: ${{ parameters.resourceSuffix }}
@@ -139,9 +139,9 @@ stages:
       clean: all
 
     steps:
-      - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
-        - download: ${{parameters.vdcArtifactPipeline}}
-          artifact: $(vdcArtifactName)
+      - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
+        - download: ${{parameters.infraArtifactPipeline}}
+          artifact: $(artifactName)
   
       - pwsh: |
           Write-Host "Script Directory: $(scriptDirectory)"
@@ -190,9 +190,9 @@ stages:
         clean: all
 
       steps:
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
-          - download: ${{parameters.vdcArtifactPipeline}}
-            artifact: $(vdcArtifactName)
+        - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
+          - download: ${{parameters.infraArtifactPipeline}}
+            artifact: $(artifactName)
     
         - pwsh: |
             Write-Host "Hello Task"
@@ -224,7 +224,7 @@ stages:
           inputs:
             terraformVersion: '$(terraformVersion)'
 
-        - ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+        - ${{ if eq(length(parameters.infraArtifactPipeline),0) }}:
           # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
           - pwsh: |
               #(Get-Content ./provider.tf) -replace "version *= `" *= +(?<eol>[^,]+$)",'version = "~> ${eol}' | Out-File provider.tf
@@ -234,7 +234,7 @@ stages:
             enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
 
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+        - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
           - bash: |
               find . -name *_x?
               find . -name *_x? | xargs chmod +x
@@ -364,7 +364,7 @@ stages:
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
-        vdcResourceGroup: $[ dependencies.Provision.outputs['terraform.vdc_resource_group'] ]
+        resourceGroup: $[ dependencies.Provision.outputs['terraform.resource_group_name'] ]
         # Use earlier prepared Terraform config
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
 
@@ -372,9 +372,9 @@ stages:
         vmImage: 'ubuntu-latest'
 
       steps:
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
-          - download: ${{parameters.vdcArtifactPipeline}}
-            artifact: $(vdcArtifactName)
+        - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
+          - download: ${{parameters.infraArtifactPipeline}}
+            artifact: $(artifactName)
     
         - pwsh: |
             Write-Host "Hello Task"
@@ -387,7 +387,7 @@ stages:
           inputs:
             terraformVersion: '$(terraformVersion)'
 
-        - ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+        - ${{ if eq(length(parameters.infraArtifactPipeline),0) }}:
           # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
           - pwsh: |
               (Get-Content ./provider.tf) -replace "version *= `" *= +",'version = "~> ' | Out-File provider.tf
@@ -406,7 +406,7 @@ stages:
             action: Stop
             resourceGroupName: '$(resourceGroup)'
 
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+        - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
           - bash: |
               find . -name *_x?
               find . -name *_x? | xargs chmod +x
@@ -453,14 +453,14 @@ stages:
             workingDirectory: '$(terraformDirectory)'
 
   - ${{ if eq(parameters.deploy, true) }}:
-    # Deploy PaaS application 
+    # Deploy application 
     - job: 'Deploy'
       dependsOn:
         - Prepare
         - Provision
         - ${{ if eq(parameters.reprovision, true) }}:
           - Reprovision
-      displayName: 'Deploy PaaS Application'
+      displayName: 'Deploy Application'
       condition: succeeded()
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
@@ -472,7 +472,7 @@ stages:
         appServiceName: $[ dependencies.Provision.outputs['terraform.paas_app_service_name'] ]
         appMSIName: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_name'] ]
         appMSIClientID: $[ dependencies.Provision.outputs['terraform.paas_app_service_msi_client_id'] ]
-        appSQLAdmin: 'vdcadmin'
+        appSQLAdmin: 'demoadmin'
         appSQLDatabase: $[ dependencies.Provision.outputs['terraform.paas_app_sql_database'] ]
         appSQLFirewallImportRule: 'AllowAllWindowsAzureIPs'
         appSQLServer: $[ dependencies.Provision.outputs['terraform.paas_app_sql_server'] ]
@@ -492,9 +492,9 @@ stages:
         vmImage: 'ubuntu-latest'
 
       steps:
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
-          - download: ${{parameters.vdcArtifactPipeline}}
-            artifact: $(vdcArtifactName)
+        - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
+          - download: ${{parameters.infraArtifactPipeline}}
+            artifact: $(artifactName)
     
         - pwsh: |
             Write-Host "Hello Task"
@@ -508,7 +508,7 @@ stages:
           inputs:
             terraformVersion: '$(terraformVersion)'
 
-        - ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+        - ${{ if eq(length(parameters.infraArtifactPipeline),0) }}:
           # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
           - pwsh: |
               (Get-Content ./provider.tf) -replace "version *= `" *= +(?<eol>[^,]+$)",'version = "~> ${eol}' | Out-File provider.tf
@@ -619,9 +619,9 @@ stages:
         vmImage: 'ubuntu-latest'
 
       steps:
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
-          - download: ${{parameters.vdcArtifactPipeline}}
-            artifact: $(vdcArtifactName)
+        - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
+          - download: ${{parameters.infraArtifactPipeline}}
+            artifact: $(artifactName)
     
         - pwsh: |
             Write-Host "Hello Task"
@@ -700,9 +700,9 @@ stages:
         vmImage: 'ubuntu-latest'
 
       steps:
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
-          - download: ${{parameters.vdcArtifactPipeline}}
-            artifact: $(vdcArtifactName)
+        - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
+          - download: ${{parameters.infraArtifactPipeline}}
+            artifact: $(artifactName)
     
         - pwsh: |
             Write-Host "Hello Task"
@@ -734,7 +734,7 @@ stages:
           inputs:
             terraformVersion: '$(terraformVersion)'
 
-        - ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+        - ${{ if eq(length(parameters.infraArtifactPipeline),0) }}:
           # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
           - pwsh: |
               (Get-Content ./provider.tf) -replace "version *= `" *= +(?<eol>[^,]+$)",'version = "~> ${eol}' | Out-File provider.tf
@@ -743,7 +743,7 @@ stages:
             enabled: ${{ and(not(parameters.testMode),parameters.unpinTerraformProviders) }}
             workingDirectory: '$(terraformDirectory)'
 
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
+        - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
           - bash: |
               find . -name *_x?
               find . -name *_x? | xargs chmod +x
@@ -793,7 +793,7 @@ stages:
             pwsh: true
             workingDirectory: '$(scriptDirectory)'
 
-        - ${{ if eq(length(parameters.vdcArtifactPipeline),0) }}:
+        - ${{ if eq(length(parameters.infraArtifactPipeline),0) }}:
         # Unpin version e.g. "= 2.17" -> "~> 2.17", but only in CI build
         # Publish Initialized Terraform workspace
         # This workspace can be downloaded as artifacts in a release pipeline. 
@@ -802,7 +802,7 @@ stages:
             displayName: 'Publish Initialized Terraform workspace'
           # enabled: ${{ not(parameters.testMode) }}
             inputs:
-              artifact: $(vdcArtifactName)
+              artifact: $(artifactName)
 
   - ${{ if ne(parameters.destroy, 'Never') }}:
     # Clean up resources, in the event 'terraform destroy' fails   
@@ -831,9 +831,9 @@ stages:
         clean: all
 
       steps:
-        - ${{ if gt(length(parameters.vdcArtifactPipeline),0) }}:
-          - download: ${{parameters.vdcArtifactPipeline}}
-            artifact: $(vdcArtifactName)
+        - ${{ if gt(length(parameters.infraArtifactPipeline),0) }}:
+          - download: ${{parameters.infraArtifactPipeline}}
+            artifact: $(artifactName)
     
         - pwsh: |
             Write-Host "Hello Task"
@@ -841,8 +841,8 @@ stages:
           enabled: ${{ parameters.testMode }}
 
         - task: AzureResourceGroupDeployment@2
-          displayName: 'Tear down VDC resource group'
-          enabled: false # rely on erase.ps1
+          displayName: 'Tear down resource group'
+          enabled: false # rely on cleanup
           inputs:
             azureSubscription: '$(subscriptionConnection)'
             action: DeleteRG
