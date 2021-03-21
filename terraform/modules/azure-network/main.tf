@@ -3,7 +3,7 @@ data azurerm_resource_group rg {
 }
 
 locals {
-  sql_server_name              = split("/",var.sql_server_id)[8]
+  sql_server_name              = var.sql_server_id != null ? split("/",var.sql_server_id)[8] : null
 }
 
 resource azurerm_virtual_network vnet {
@@ -102,7 +102,7 @@ resource azurerm_private_endpoint sql_server_endpoint {
 
   tags                         = data.azurerm_resource_group.rg.tags
 
-  count                        = var.create_sql_server_endpoint ? 1 : 0
+  count                        = var.create_sql_server_endpoint && var.sql_server_id != null ? 1 : 0
 }
 
 
