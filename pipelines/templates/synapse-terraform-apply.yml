@@ -302,12 +302,10 @@ stages:
                 $upperCaseName = $tfvar.Name + "_UC"
                 $properCaseName = $tfvar.Name.Substring(0,7) + $tfvar.Name.Substring(7).ToLowerInvariant()
                 New-Item -Path env:$upperCaseName -Value $tfVar.Value
-                # Invoke-Expression "`$env:$upperCaseName = `$env:$($tfvar.Name)"
                 Remove-Item -Path env:$($tfvar.Name)
-                # Invoke-Expression "`$env:$($tfvar.Name) = `$null"
                 New-Item -Path env:$properCaseName -Value $tfVar.Value
-                # Invoke-Expression "`$env:$properCaseName = `$env:$($upperCaseName)"
-                Remove-Item -Path env:$upperCaseName
+                # Remove-Item -Path env:$upperCaseName
+                Set-Item -Path env:$upperCaseName -Value $null
                 # Invoke-Expression "`$env:$upperCaseName = `$null"
               } 
               # List environment variables
