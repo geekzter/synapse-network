@@ -82,7 +82,7 @@ stages:
     displayName: 'Provision, Deploy, Tear down'
     inherit: ${{ parameters.inherit }}
     provision: true
-    reprovision: true
+    reprovision: false
     deploy: ${{ parameters.deploy }}
     destroy: ${{ parameters.destroy }}
     testMode: ${{ parameters.testMode }}
