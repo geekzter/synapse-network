@@ -34,14 +34,14 @@ steps:
   displayName: 'Build function(s) ($(buildConfiguration))'
   inputs:
     command: 'build'
-    arguments: '--configuration $(buildConfiguration)'
+    arguments: '--configuration $(buildConfiguration) --no-restore'
     workingDirectory: '$(functionsDirectory)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Publish function(s) artifacts ($(buildConfiguration))'
   inputs:
     command: publish
-    publishWebProjects: True
+    # publishWebProjects: True
     arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     workingDirectory: '$(functionsDirectory)'
     zipAfterPublish: True
