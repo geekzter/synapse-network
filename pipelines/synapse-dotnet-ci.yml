@@ -11,25 +11,31 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  functionDirectory: '$(Build.SourcesDirectory)/functions'
+  functionsDirectory: '$(Build.SourcesDirectory)/functions'
 
 steps:
 # - script: dotnet build --configuration $(buildConfiguration)
 #   displayName: 'dotnet build $(buildConfiguration)'
+- pwsh: |
+    Write-Host "$(functionsDirectory)"
+    dir $(functionsDirectory)
+  displayName: 'Test task'
+
 - task: DotNetCoreCLI@2
   displayName: 'Restore function(s) dependencies'
   inputs:
     command: 'restore'
+    projects: '**/*.csproj'
     # feedsToUse: 'select'
     # vstsFeed: 'my-vsts-feed' # A series of numbers and letters
-    workingDirectory: '$(functionDirectory)'
+    workingDirectory: '$(functionsDirectory)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Build function(s) ($(buildConfiguration))'
   inputs:
     command: 'build'
     arguments: '--configuration $(buildConfiguration)'
-    workingDirectory: '$(functionDirectory)'
+    workingDirectory: '$(functionsDirectory)'
 
 - task: DotNetCoreCLI@2
   displayName: 'Publish function(s) artifacts ($(buildConfiguration))'
@@ -37,5 +43,5 @@ steps:
     command: publish
     publishWebProjects: True
     arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-    workingDirectory: '$(functionDirectory)'
+    workingDirectory: '$(functionsDirectory)'
     zipAfterPublish: True
