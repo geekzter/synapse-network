@@ -633,6 +633,7 @@ stages:
       timeoutInMinutes: $[ variables['jobTimeOutMinutes'] ]
 
       variables:
+        resourceGroup: $[ dependencies.Provision.outputs['terraform.resource_group_name'] ]
         sqlServerFQDN: $[ dependencies.Provision.outputs['terraform.sql_dwh_fqdn'] ]
         sqlDatabase: $[ dependencies.Provision.outputs['terraform.sql_dwh_pool_name'] ]
         adminUser: $[ dependencies.Provision.outputs['terraform.user_name'] ]
