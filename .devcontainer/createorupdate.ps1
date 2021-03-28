@@ -16,7 +16,7 @@ if (!(Get-Command tmux -ErrorAction SilentlyContinue)) {
 }
 
 # Determine directory locations (may vary based on what branch has been cloned initially)
-$repoDirectory = (Split-Path (get-childitem 100m.png -Path ~ -Recurse).FullName -Parent)
+$repoDirectory = (Split-Path (Split-Path (Get-ChildItem "100m.png" -Path ~ -Recurse).FullName -Parent) -Parent)
 $terraformDirectory = Join-Path $repoDirectory "terraform"
 # This will be the location where we save a PowerShell profile
 $profileTemplate = (Join-Path (Split-Path -Parent -Path $MyInvocation.MyCommand.Path) profile.ps1)
