@@ -41,7 +41,7 @@ steps:
   displayName: 'Publish function(s) artifacts ($(buildConfiguration))'
   inputs:
     command: publish
-    # publishWebProjects: True
+    publishWebProjects: False
     arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     workingDirectory: '$(functionsDirectory)'
     zipAfterPublish: True
