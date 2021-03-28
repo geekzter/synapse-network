@@ -1,8 +1,10 @@
 trigger:
   branches:
-    include: '*'
+    include: 
+    - '*'
   paths:
-    include: 'functions/*'
+    include: 
+    - 'functions/*'
 
 pool:
   vmImage: ubuntu-latest
