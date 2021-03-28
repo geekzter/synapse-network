@@ -45,3 +45,12 @@ steps:
     arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     workingDirectory: '$(functionsDirectory)'
     zipAfterPublish: True
+
+- task: AzureFunctionApp@1 # Add this at the end of your file
+  displayName: 'Deploy Azure function(s)'
+  inputs:
+    azureSubscription: 'internal-azure-subscription'
+    appType: functionAppLinux
+    appName: 'synapse-network-default-vopd-westeurope-functions-top-test'
+    package: $(System.ArtifactStagingDirectory)/**/*.zip    
+    # package: $(System.ArtifactsDirectory)/**/*.zip
