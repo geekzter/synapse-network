@@ -14,20 +14,11 @@ variables:
   functionsDirectory: '$(Build.SourcesDirectory)/functions'
 
 steps:
-# - script: dotnet build --configuration $(buildConfiguration)
-#   displayName: 'dotnet build $(buildConfiguration)'
-- pwsh: |
-    Write-Host "$(functionsDirectory)"
-    dir $(functionsDirectory)
-  displayName: 'Test task'
-
 - task: DotNetCoreCLI@2
   displayName: 'Restore function(s) dependencies'
   inputs:
     command: 'restore'
     projects: '**/*.csproj'
-    # feedsToUse: 'select'
-    # vstsFeed: 'my-vsts-feed' # A series of numbers and letters
     workingDirectory: '$(functionsDirectory)'
 
 - task: DotNetCoreCLI@2
@@ -45,12 +36,3 @@ steps:
     arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
     workingDirectory: '$(functionsDirectory)'
     zipAfterPublish: True
-
-- task: AzureFunctionApp@1 # Add this at the end of your file
-  displayName: 'Deploy Azure function(s)'
-  inputs:
-    azureSubscription: 'internal-azure-subscription'
-    appType: functionAppLinux
-    appName: 'synapse-network-default-vopd-westeurope-functions-top-test'
-    # package: $(System.ArtifactStagingDirectory)/**/*.zip
-    package: $(System.ArtifactsDirectory)/**/*.zip

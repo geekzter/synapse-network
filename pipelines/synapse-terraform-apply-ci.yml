@@ -20,7 +20,7 @@ parameters:
 - name: deploy
   displayName: Deploy applications
   type: boolean
-  default: false
+  default: true
 - name: destroy
   displayName: Destroy infrastructure
   type: string
