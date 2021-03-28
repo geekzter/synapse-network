@@ -449,6 +449,7 @@ stages:
 
       variables:
         appArtifactDirectory: '$(Pipeline.Workspace)/aspnetcoresql'
+        buildConfiguration: 'Release'
 
         # appBuild: 'Release'
         # appPackage: '$(appArtifactDirectory)/s/bin/$(appBuild)/netcoreapp3.1/publish.zip'
@@ -476,6 +477,7 @@ stages:
         adminUser: $[ dependencies.Provision.outputs['terraform.user_name'] ]
         adminPassword: $[ dependencies.Provision.outputs['terraform.user_password'] ]
         functionName: $[ dependencies.Provision.outputs['terraform.function_name'] ]
+        resourceGroup: $[ dependencies.Provision.outputs['terraform.resource_group_name'] ]
         sqlServerFQDN: $[ dependencies.Provision.outputs['terraform.sql_dwh_fqdn'] ]
         sqlDatabase: $[ dependencies.Provision.outputs['terraform.sql_dwh_pool_name'] ]
 
@@ -546,41 +548,6 @@ stages:
             failOnStandardError: true
             workingDirectory: '$(terraformDirectory)'
 
-        - task: DotNetCoreCLI@2
-          displayName: 'Restore function(s) dependencies'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            command: 'restore'
-            projects: '**/*.csproj'
-            workingDirectory: '$(functionsDirectory)'
-
-        - task: DotNetCoreCLI@2
-          displayName: 'Build function(s) ($(buildConfiguration))'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            command: 'build'
-            arguments: '--configuration $(buildConfiguration) --no-restore'
-            workingDirectory: '$(functionsDirectory)'
-
-        - task: DotNetCoreCLI@2
-          displayName: 'Publish function(s) artifacts ($(buildConfiguration))'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            command: publish
-            publishWebProjects: False
-            arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-            workingDirectory: '$(functionsDirectory)'
-            zipAfterPublish: True
-
-        - task: AzureFunctionApp@1
-          displayName: 'Deploy Azure function(s)'
-          enabled: ${{ not(parameters.testMode) }}
-          inputs:
-            azureSubscription: '$(subscriptionConnection)'
-            appType: functionAppLinux
-            appName: '$(functionName)'
-            package: $(System.ArtifactsDirectory)/**/*.zip
-
         # # This task requires a Windows Pipeline agent, and is hard to debug
         # - task: SqlAzureDacpacDeployment@1
         #   displayName: 'Load New York Taxicab data'
@@ -617,32 +584,41 @@ stages:
             useGlobalConfig: true
             workingDirectory: '$(scriptDirectory)'
             failOnStandardError: true
+            
+        - task: DotNetCoreCLI@2
+          displayName: 'Restore function(s) dependencies'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            command: 'restore'
+            projects: '**/*.csproj'
+            workingDirectory: '$(functionsDirectory)'
 
-        # - task: AzureCLI@2
-        #   displayName: 'Retrieve top $(rowCount) rows'
-        #   enabled: ${{ not(parameters.testMode) }}
-        #   inputs:
-        #     azureSubscription: '$(subscriptionConnection)'
-        #     scriptType: pscore
-        #     scriptLocation: inlineScript
-        #     inlineScript: |
-        #       $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
-        #       $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
-        #       $env:ARM_TENANT_ID       ??= $env:tenantId
-        #       $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
-        #       $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+        - task: DotNetCoreCLI@2
+          displayName: 'Build function(s) ($(buildConfiguration))'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            command: 'build'
+            arguments: '--configuration $(buildConfiguration) --no-restore'
+            workingDirectory: '$(functionsDirectory)'
 
-        #       $securePassword =  ConvertTo-SecureString -String "$(adminPassword)" -AsPlainText
-        #       ./run_query.ps1 -ResourceGroup $(resourceGroup) `
-        #                       -SqlServerFQDN $(sqlServerFQDN) `
-        #                       -SqlDatabaseName $(sqlDatabase) `
-        #                       -SqlUser $(adminUser)`
-        #                       -SecurePassword $securePassword `
-        #                       -RowCount $(rowCount)
-        #     addSpnToEnvironment: true
-        #     useGlobalConfig: true
-        #     workingDirectory: '$(scriptDirectory)'
-        #     failOnStandardError: true
+        - task: DotNetCoreCLI@2
+          displayName: 'Publish function(s) artifacts ($(buildConfiguration))'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            command: publish
+            publishWebProjects: False
+            arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+            workingDirectory: '$(functionsDirectory)'
+            zipAfterPublish: True
+
+        - task: AzureFunctionApp@1
+          displayName: 'Deploy Azure function(s)'
+          enabled: ${{ not(parameters.testMode) }}
+          inputs:
+            azureSubscription: '$(subscriptionConnection)'
+            appType: functionAppLinux
+            appName: '$(functionName)'
+            package: $(System.ArtifactsDirectory)/**/*.zip
 
   - ${{ if eq(parameters.deploy, true) }}:
     # Test applications
@@ -675,21 +651,31 @@ stages:
           displayName: 'Test task'
           enabled: ${{ parameters.testMode }}
 
-        # Test PaaS Application
-        - task: PowerShell@2
-          displayName: 'Test PaaS Application'
-          enabled: false # ${{ not(parameters.testMode) }}
-          inputs:
-            targetType: 'inline'
-            script: |
-              # Wait for the WAF to get ready
-              Start-Sleep -Seconds 10
-              
-              # Request page
-              Write-Host "Requesting $(paasAppUrl)..."
-              Invoke-WebRequest -Uri $(paasAppUrl) -MaximumRetryCount 9
-            failOnStderr: true
-            pwsh: true
+        # - task: AzureCLI@2
+        #   displayName: 'Retrieve top $(rowCount) rows'
+        #   enabled: ${{ not(parameters.testMode) }}
+        #   inputs:
+        #     azureSubscription: '$(subscriptionConnection)'
+        #     scriptType: pscore
+        #     scriptLocation: inlineScript
+        #     inlineScript: |
+        #       $env:ARM_CLIENT_ID       ??= $env:servicePrincipalId
+        #       $env:ARM_CLIENT_SECRET   ??= $env:servicePrincipalKey
+        #       $env:ARM_TENANT_ID       ??= $env:tenantId
+        #       $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
+        #       $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
+
+        #       $securePassword =  ConvertTo-SecureString -String "$(adminPassword)" -AsPlainText
+        #       ./run_query.ps1 -ResourceGroup $(resourceGroup) `
+        #                       -SqlServerFQDN $(sqlServerFQDN) `
+        #                       -SqlDatabaseName $(sqlDatabase) `
+        #                       -SqlUser $(adminUser)`
+        #                       -SecurePassword $securePassword `
+        #                       -RowCount $(rowCount)
+        #     addSpnToEnvironment: true
+        #     useGlobalConfig: true
+        #     workingDirectory: '$(scriptDirectory)'
+        #     failOnStandardError: true
 
   - ${{ if ne(parameters.destroy, 'Never') }}:
     # Destroy infrastructure
