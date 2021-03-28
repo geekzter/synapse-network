@@ -1,7 +1,8 @@
 terraform {
   required_providers {
-    aws                        = "~> 3.32"
-    azurerm                    = "~> 2.52"
+    aws                        = "~> 3.34"
+    azurerm                    = "~> 2.53"
+    http                       = "~> 2.1"
     local                      = "~> 2.1"
     null                       = "~> 3.1"
     random                     = "~> 3.1"

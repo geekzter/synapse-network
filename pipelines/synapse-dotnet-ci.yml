@@ -1,0 +1,38 @@
+trigger:
+  branches:
+    include: 
+    - '*'
+  paths:
+    include: 
+    - 'functions/*'
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: 'Release'
+  functionsDirectory: '$(Build.SourcesDirectory)/functions'
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'Restore function(s) dependencies'
+  inputs:
+    command: 'restore'
+    projects: '**/*.csproj'
+    workingDirectory: '$(functionsDirectory)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build function(s) ($(buildConfiguration))'
+  inputs:
+    command: 'build'
+    arguments: '--configuration $(buildConfiguration) --no-restore'
+    workingDirectory: '$(functionsDirectory)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish function(s) artifacts ($(buildConfiguration))'
+  inputs:
+    command: publish
+    publishWebProjects: False
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    workingDirectory: '$(functionsDirectory)'
+    zipAfterPublish: True
