@@ -1,0 +1,39 @@
+trigger:
+  branches:
+    include: '*'
+  paths:
+    include: 'functions/*'
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  buildConfiguration: 'Release'
+  functionDirectory: '$(Build.SourcesDirectory)/functions'
+
+steps:
+# - script: dotnet build --configuration $(buildConfiguration)
+#   displayName: 'dotnet build $(buildConfiguration)'
+- task: DotNetCoreCLI@2
+  displayName: 'Restore function(s) dependencies'
+  inputs:
+    command: 'restore'
+    # feedsToUse: 'select'
+    # vstsFeed: 'my-vsts-feed' # A series of numbers and letters
+    workingDirectory: '$(functionDirectory)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build function(s) ($(buildConfiguration))'
+  inputs:
+    command: 'build'
+    arguments: '--configuration $(buildConfiguration)'
+    workingDirectory: '$(functionDirectory)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish function(s) artifacts ($(buildConfiguration))'
+  inputs:
+    command: publish
+    publishWebProjects: True
+    arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+    workingDirectory: '$(functionDirectory)'
+    zipAfterPublish: True
