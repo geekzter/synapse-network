@@ -4,7 +4,6 @@ This repo can be used to demonstrate performance of connectivity between various
 Synapse Analytics (dedicated SQL pool formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
 
 [![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/synapse-terraform-apply-ci?branchName=main)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=82&branchName=main)
-[![Build Status](https://dev.azure.com/ericvan/VDC/_apis/build/status/synapse-dotnet-ci?branchName=main)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=84&branchName=main)
 
 <br/>
 
