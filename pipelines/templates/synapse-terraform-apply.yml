@@ -472,10 +472,10 @@ stages:
         # Use earlier prepared Terraform config
         terraformVersion: $[ dependencies.Prepare.outputs['terraformConfig.version'] ]
         functionsDirectory: '$(Build.SourcesDirectory)/functions'
-        functionName: $[ dependencies.Provision.outputs['terraform.function_name'] ]
 
         adminUser: $[ dependencies.Provision.outputs['terraform.user_name'] ]
         adminPassword: $[ dependencies.Provision.outputs['terraform.user_password'] ]
+        functionName: $[ dependencies.Provision.outputs['terraform.function_name'] ]
         sqlServerFQDN: $[ dependencies.Provision.outputs['terraform.sql_dwh_fqdn'] ]
         sqlDatabase: $[ dependencies.Provision.outputs['terraform.sql_dwh_pool_name'] ]
 
@@ -492,6 +492,13 @@ stages:
             Write-Host "Hello Task"
           displayName: 'Test task'
           enabled: ${{ parameters.testMode }}
+
+        - pwsh: |
+            Write-Host "functionName: '$(functionName)'"
+            Write-Host "sqlServerFQDN: '$(sqlServerFQDN)'"
+            Write-Host "sqlDatabase: '$(sqlDatabase)'"
+          displayName: 'Debug'
+          enabled: ${{ not(parameters.testMode) }}
 
         # Assume workspace is empty and re-download secure files
         - task: TerraformInstaller@0
