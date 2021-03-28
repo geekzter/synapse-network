@@ -72,9 +72,10 @@ variables:
 - group: 'synapse-ci'
 - name: 'TF_VAR_run_id'
   value: '$(Build.BuildId)'
-# Don't set suffix so we can inherit state from previous pipeline run
-# - name: 'TF_VAR_resource_suffix'
-#   value: 'b$(Build.BuildId)'
+- ${{ not(parameters.inherit)}}:
+  # Don't set suffix to a new value if we want to inherit state
+  - name: 'TF_VAR_resource_suffix'
+    value: 'b$(Build.BuildId)'
 
 stages:
 - template: ./templates/synapse-terraform-apply.yml
