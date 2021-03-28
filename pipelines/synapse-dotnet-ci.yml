@@ -52,5 +52,5 @@ steps:
     azureSubscription: 'internal-azure-subscription'
     appType: functionAppLinux
     appName: 'synapse-network-default-vopd-westeurope-functions-top-test'
-    package: $(System.ArtifactStagingDirectory)/**/*.zip    
-    # package: $(System.ArtifactsDirectory)/**/*.zip
+    # package: $(System.ArtifactStagingDirectory)/**/*.zip
+    package: $(System.ArtifactsDirectory)/**/*.zip
