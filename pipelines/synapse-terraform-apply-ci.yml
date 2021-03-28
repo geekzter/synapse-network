@@ -72,7 +72,7 @@ variables:
 - group: 'synapse-ci'
 - name: 'TF_VAR_run_id'
   value: '$(Build.BuildId)'
-- ${{ not(parameters.inherit)}}:
+- ${{ if not(parameters.inherit) }}:
   # Don't set suffix to a new value if we want to inherit state
   - name: 'TF_VAR_resource_suffix'
     value: 'b$(Build.BuildId)'
