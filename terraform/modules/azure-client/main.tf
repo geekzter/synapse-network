@@ -5,6 +5,11 @@ data azurerm_resource_group rg {
 data azurerm_client_config current {}
 
 locals {
+  setup_script                 = templatefile("${path.module}/setup_windows_vm.ps1", { 
+    sql_dwh_fqdn               = var.sql_dwh_fqdn
+    sql_dwh_pool               = var.sql_dwh_pool
+    user_name                  = var.user_name
+  })
   vm_name                      = "${data.azurerm_resource_group.rg.name}-${var.location}-vm"
 }
 
@@ -68,24 +73,6 @@ resource azurerm_network_interface_security_group_association nic_nsg {
   network_security_group_id    = azurerm_network_security_group.nsg.id
 }
 
-data azurerm_storage_container scripts {
-  name                         = split("/",var.scripts_storage_container_id)[3]
-  storage_account_name         = split(".",split("/",var.scripts_storage_container_id)[2])[0]
-}
-
-resource azurerm_storage_blob setup_windows_vm_ps1 {
-  name                         = "setup_windows_vm_${var.location}.ps1"
-  storage_account_name         = data.azurerm_storage_container.scripts.storage_account_name
-  storage_container_name       = data.azurerm_storage_container.scripts.name
-
-  type                         = "Block"
-  source_content               = templatefile("${path.module}/setup_windows_vm.ps1", { 
-    sql_dwh_fqdn               = var.sql_dwh_fqdn
-    sql_dwh_pool               = var.sql_dwh_pool
-    user_name                  = var.user_name
-  })
-}
-
 resource azurerm_windows_virtual_machine vm {
   name                         = local.vm_name
   computer_name                = lower(substr(replace("synapseclient${var.location}","/a|e|i|o|u|y|-/",""),0,15))
@@ -120,10 +107,10 @@ resource azurerm_windows_virtual_machine vm {
   }
   additional_unattend_content {
     setting                    = "FirstLogonCommands"
-    content                    = templatefile("${path.module}/FirstLogonCommands.xml", { 
-      scripturl                = azurerm_storage_blob.setup_windows_vm_ps1.url
-    })
+    content                    = file("${path.module}/FirstLogonCommands.xml")
   }
+
+  custom_data                  = base64encode(local.setup_script)
 
   identity {
     type                       = "UserAssigned"

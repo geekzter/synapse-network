@@ -60,7 +60,6 @@ module azure_client {
   source                       = "./modules/azure-client"
   resource_group_name          = azurerm_resource_group.synapse.name
   location                     = azurerm_resource_group.synapse.location
-  scripts_storage_container_id = azurerm_storage_container.scripts.id
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
   subnet_id                    = module.azure_network[0].vm_subnet_id
@@ -76,7 +75,6 @@ module azure_client_alternate_region {
   source                       = "./modules/azure-client"
   resource_group_name          = azurerm_resource_group.synapse.name
   location                     = var.azure_alternate_region
-  scripts_storage_container_id = azurerm_storage_container.scripts.id
   sql_dwh_fqdn                 = var.deploy_synapse ? module.synapse[0].sql_dwh_fqdn : "yourserver.database.windows.net"
   sql_dwh_pool                 = var.deploy_synapse ? module.synapse[0].sql_dwh_pool_name : "pool"
   subnet_id                    = module.azure_network_alternate_region[0].vm_subnet_id
