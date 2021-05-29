@@ -15,15 +15,15 @@ locals {
   publicip                     = chomp(data.http.localpublicip.body)
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result  
-  tags                         = map(
-    "application",               "Synapse Performance",
-    "environment",               "dev",
-    "provisioner",               "terraform",
-    "repository",                "synapse-performance",
-    "runid",                     var.run_id,
-    "suffix",                    local.suffix,
-    "workspace",                 terraform.workspace
-  )
+  tags                         = {
+    application                = "Synapse Performance"
+    environment                = "dev"
+    provisioner                = "terraform"
+    repository                 = "synapse-performance"
+    runid                      = var.run_id
+    suffix                     = local.suffix
+    workspace                  = terraform.workspace
+  }
 }
 
 # Random resource suffix, this will prevent name collisions when creating resources in parallel
@@ -64,36 +64,11 @@ resource azurerm_user_assigned_identity client_identity {
   tags                         = local.tags
 }
 
-
 resource azurerm_resource_group synapse {
   name                         = "synapse-network-${terraform.workspace}-${local.suffix}"
   location                     = var.azure_region
 
   tags                         = local.tags
-}
-
-resource azurerm_storage_account automation_storage {
-  name                         = "${lower(substr(replace(azurerm_resource_group.synapse.name,"/a|e|i|o|u|y|-/",""),0,20))}${local.suffix}"
-  location                     = azurerm_resource_group.synapse.location
-  resource_group_name          = azurerm_resource_group.synapse.name
-  account_kind                 = "StorageV2"
-  account_tier                 = "Standard"
-  account_replication_type     = "LRS"
-  allow_blob_public_access     = true
-  blob_properties {
-    delete_retention_policy {
-      days                     = 365
-    }
-  }
-  enable_https_traffic_only    = true
-
-  tags                         = azurerm_resource_group.synapse.tags
-}
-
-resource azurerm_storage_container scripts {
-  name                         = "scripts"
-  storage_account_name         = azurerm_storage_account.automation_storage.name
-  container_access_type        = "container"
 }
 
 resource azurerm_private_dns_zone sql_dns_zone {

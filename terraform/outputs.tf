@@ -94,12 +94,12 @@ output sql_dwh_pool_name {
 }
 
 output sql_dwh_private_ip_address {
-  value        = var.azure_alternate_region != null && var.azure_alternate_region != "" ? map(
-    var.azure_region, var.deploy_network && var.deploy_synapse ? module.azure_network.0.sql_server_private_ip_address : null,
-    var.azure_alternate_region, var.deploy_network && var.deploy_synapse ? module.azure_network_alternate_region.0.sql_server_private_ip_address : null,
-  ) : map(
-    var.azure_region, var.deploy_network && var.deploy_synapse ? module.azure_network.0.sql_server_private_ip_address : null,
-  )
+  value        = var.azure_alternate_region != null && var.azure_alternate_region != "" ? {
+    (var.azure_region) = var.deploy_network && var.deploy_synapse ? module.azure_network.0.sql_server_private_ip_address : null
+    (var.azure_alternate_region) = var.deploy_network && var.deploy_synapse ? module.azure_network_alternate_region.0.sql_server_private_ip_address : null
+   } : {
+    (var.azure_region) = var.deploy_network && var.deploy_synapse ? module.azure_network.0.sql_server_private_ip_address : null
+   }
 }
 
 output user_name {
@@ -113,10 +113,10 @@ output user_password {
 }
 
 output windows_vm_public_ip_address {
-  value        = var.azure_alternate_region != null && var.azure_alternate_region != "" ? map(
-    var.azure_region, var.deploy_network && var.deploy_azure_client ? module.azure_client.0.public_ip_address : null,
-    var.azure_alternate_region, var.deploy_network && var.deploy_azure_client ? module.azure_client_alternate_region.0.public_ip_address : null,
-  ) : map(
-    var.azure_region, var.deploy_network && var.deploy_azure_client ? module.azure_client.0.public_ip_address : null
-  )
+  value        = var.azure_alternate_region != null && var.azure_alternate_region != "" ? {
+    (var.azure_region) = var.deploy_network && var.deploy_azure_client ? module.azure_client.0.public_ip_address : null,
+    (var.azure_alternate_region) = var.deploy_network && var.deploy_azure_client ? module.azure_client_alternate_region.0.public_ip_address : null,
+  } : {
+    (var.azure_region) = var.deploy_network && var.deploy_azure_client ? module.azure_client.0.public_ip_address : null
+  }
 }
