@@ -19,6 +19,7 @@ if (!(Get-Command dotnet -ErrorAction SilentlyContinue)) {
 try {
     $tfdirectory=$(Join-Path (Split-Path -Parent -Path $PSScriptRoot) "terraform")
     Push-Location $tfdirectory
+    AzLogin
     
     $functionNames = (GetTerraformOutput -OutputVariable "function_name" -ComplexType)  
     if (!($functionNames)) {
