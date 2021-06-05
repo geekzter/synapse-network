@@ -1,4 +1,5 @@
 output application_insights_instrumentation_key {
+  sensitive    = true
   value        = azurerm_application_insights.insights.instrumentation_key
 }
 

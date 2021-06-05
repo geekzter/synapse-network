@@ -15,15 +15,19 @@ locals {
   publicip                     = chomp(data.http.localpublicip.body)
   publicprefix                 = jsondecode(chomp(data.http.localpublicprefix.body)).data.prefix
   suffix                       = var.resource_suffix != "" ? lower(var.resource_suffix) : random_string.suffix.result  
-  tags                         = {
-    application                = "Synapse Performance"
-    environment                = "dev"
-    provisioner                = "terraform"
-    repository                 = "synapse-performance"
-    runid                      = var.run_id
-    suffix                     = local.suffix
-    workspace                  = terraform.workspace
-  }
+  tags                         = merge(
+    {
+      application              = "Synapse Performance"
+      environment              = "dev"
+      provisioner              = "terraform"
+      repository               = "synapse-performance"
+      runid                    = var.run_id
+      shutdown                 = "true"
+      suffix                   = local.suffix
+      workspace                = terraform.workspace
+    },
+    var.tags
+  )  
 }
 
 # Random resource suffix, this will prevent name collisions when creating resources in parallel
