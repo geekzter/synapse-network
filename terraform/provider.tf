@@ -1,7 +1,7 @@
 terraform {
   required_providers {
     aws                        = "~> 3.34"
-    azurerm                    = "~> 2.53, != 2.62"
+    azurerm                    = "~> 2.53, != 2.62.0"
     http                       = "~> 2.1"
     local                      = "~> 2.1"
     null                       = "~> 3.1"
