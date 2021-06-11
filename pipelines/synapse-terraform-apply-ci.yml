@@ -356,7 +356,7 @@ jobs:
           $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
           if (!(Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue)) {
-              Install-Module -Name SqlServer -Scope CurrentUser
+              Install-Module -Name SqlServer -Scope CurrentUser -Force -AcceptLicense
           }
 
           $securePassword = ConvertTo-SecureString -String "$(TF_OUT_USER_PASSWORD)" -AsPlainText
