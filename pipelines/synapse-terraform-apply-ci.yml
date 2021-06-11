@@ -343,7 +343,7 @@ jobs:
 
     - task: AzureCLI@2
       displayName: 'Retrieve top $(rowCount) rows'
-      enabled: coalesce(variables['retrieveRows'],'false')
+      condition: and(succeeded(), eq(coalesce(variables['retrieveRows'],'false'),'true'))
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         scriptType: pscore
