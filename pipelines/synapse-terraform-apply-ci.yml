@@ -63,7 +63,7 @@ schedules:
     - master
 
 variables:
-- group: 'devenv-ci'
+- group: 'synapse-ci'
 - name: AZURE_EXTENSION_USE_DYNAMIC_INSTALL
   value: 'yes_without_prompt'
 - name: 'buildConfiguration'
@@ -98,7 +98,7 @@ variables:
   value: '$(Build.SourcesDirectory)/.ssh/id_rsa.pub'
 
 - name: 'resourceGroup' 
-  value: 'dev-$(TF_WORKSPACE)-$(TF_VAR_resource_suffix)'
+  value: 'synapse-network-$(TF_WORKSPACE)-$(TF_VAR_resource_suffix)'
 
 jobs:
 - job: 'Provision'
