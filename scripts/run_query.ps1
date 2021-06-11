@@ -46,16 +46,13 @@ function Execute-SqlCmd (
     }
 
     $sqlPassword = ConvertFrom-SecureString -SecureString $SecurePassword -AsPlainText
-    $sqlRunCommand = "sqlcmd -S $SqlServerFQDN -d $SqlDatabaseName -I -U $UserName"
 
     # Substitute with [int] parameters only
     $query = "select top ${RowCount} * from dbo.Trip"
-    $sqlRunCommand += " -Q '${query}' -e -o ${OutputFile}"
 
-    Write-Host "Retrieving ${RowCount} rows..."
-    Write-Host "${sqlRunCommand} -P `<password`>" -ForegroundColor Green
+    Write-Host "Retrieving ${RowCount} rows from ${SqlServerFQDN}/${SqlDatabaseName}..."
     $stopwatch = [system.diagnostics.stopwatch]::StartNew()
-    Invoke-Expression "${sqlRunCommand} -P '${sqlPassword}'"
+    Invoke-Sqlcmd -ServerInstance $SqlServerFQDN -Database $SqlDatabaseName -Query $query -Username $UserName -Password $sqlPassword | Format-Table
     $stopwatch.Stop()
     $stopWatch | Out-File $outputFile -Append
     $errors = (Get-Content $outputFile | Select-String "Error:")
@@ -69,8 +66,8 @@ function Execute-SqlCmd (
 
 . (Join-Path $PSScriptRoot functions.ps1)
 
-if (!(Get-Command sqlcmd -ErrorAction SilentlyContinue)) {
-    Write-Warning "sqlcmd not found, exiting..."
+if (!(Get-Command Invoke-Sqlcmd -ErrorAction SilentlyContinue)) {
+    Write-Warning "Invoke-Sqlcmd not found. Run 'Install-Module -Name SqlServer' to get it. Exiting..."
     exit
 }
 

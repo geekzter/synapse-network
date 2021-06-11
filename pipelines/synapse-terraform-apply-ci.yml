@@ -355,6 +355,10 @@ jobs:
           $env:ARM_TENANT_ID       ??= $(az account show --query tenantId -o tsv)
           $env:ARM_SUBSCRIPTION_ID ??= $(az account show --query id -o tsv)
 
+          Get-Command Invoke-Sqlcmd
+
+          # Install-Module -Name SqlServer -Scope CurrentUser
+
           $securePassword = ConvertTo-SecureString -String "$(TF_OUT_USER_PASSWORD)" -AsPlainText
           ./run_query.ps1 -ResourceGroup $(TF_OUT_RESOURCE_GROUP_NAME) `
                           -SqlServerFQDN $(TF_OUT_SQL_DWH_FQDN) `
