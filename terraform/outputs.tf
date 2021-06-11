@@ -89,9 +89,11 @@ output managed_identity_client_id {
 output resource_group_id {
   value        = azurerm_resource_group.synapse.id
 }
-
 output resource_group_name {
   value        = azurerm_resource_group.synapse.name
+}
+output resource_suffix {
+  value                        = local.suffix
 }
 
 output sql_dwh_fqdn {
