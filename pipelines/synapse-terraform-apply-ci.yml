@@ -309,37 +309,6 @@ jobs:
         useGlobalConfig: true
         workingDirectory: '$(scriptDirectory)'
         failOnStandardError: true
-        
-    - task: DotNetCoreCLI@2
-      displayName: 'Restore function(s) dependencies'
-      inputs:
-        command: 'restore'
-        projects: '**/*.csproj'
-        workingDirectory: '$(functionsDirectory)'
-
-    - task: DotNetCoreCLI@2
-      displayName: 'Build function(s) ($(buildConfiguration))'
-      inputs:
-        command: 'build'
-        arguments: '--configuration $(buildConfiguration) --no-restore'
-        workingDirectory: '$(functionsDirectory)'
-
-    - task: DotNetCoreCLI@2
-      displayName: 'Publish function(s) artifacts ($(buildConfiguration))'
-      inputs:
-        command: publish
-        publishWebProjects: False
-        arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
-        workingDirectory: '$(functionsDirectory)'
-        zipAfterPublish: True
-
-    - task: AzureFunctionApp@1
-      displayName: 'Deploy Azure function(s)'
-      inputs:
-        azureSubscription: '$(subscriptionConnection)'
-        appType: functionAppLinux
-        appName: '$(TF_OUT_FUNCTION_NAME)'
-        package: $(System.ArtifactsDirectory)/**/*.zip
 
     - task: AzureCLI@2
       displayName: 'Retrieve top $(rowCount) rows'
@@ -370,6 +339,37 @@ jobs:
         useGlobalConfig: true
         workingDirectory: '$(scriptDirectory)'
         failOnStandardError: true
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore function(s) dependencies'
+      inputs:
+        command: 'restore'
+        projects: '**/*.csproj'
+        workingDirectory: '$(functionsDirectory)'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Build function(s) ($(buildConfiguration))'
+      inputs:
+        command: 'build'
+        arguments: '--configuration $(buildConfiguration) --no-restore'
+        workingDirectory: '$(functionsDirectory)'
+
+    - task: DotNetCoreCLI@2
+      displayName: 'Publish function(s) artifacts ($(buildConfiguration))'
+      inputs:
+        command: publish
+        publishWebProjects: False
+        arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
+        workingDirectory: '$(functionsDirectory)'
+        zipAfterPublish: True
+
+    - task: AzureFunctionApp@1
+      displayName: 'Deploy Azure function(s)'
+      inputs:
+        azureSubscription: '$(subscriptionConnection)'
+        appType: functionAppLinux
+        appName: '$(TF_OUT_FUNCTION_NAME)'
+        package: $(System.ArtifactsDirectory)/**/*.zip
 
     - ${{ if parameters.testReentrance }}:
       - task: TerraformCLI@0
