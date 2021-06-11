@@ -52,10 +52,10 @@ function Execute-SqlCmd (
 
     Write-Host "Retrieving ${RowCount} rows from ${SqlServerFQDN}/${SqlDatabaseName}..."
     $stopwatch = [system.diagnostics.stopwatch]::StartNew()
-    Invoke-Sqlcmd -ServerInstance $SqlServerFQDN -Database $SqlDatabaseName -Query $query -Username $UserName -Password $sqlPassword | Format-Table
+    Invoke-Sqlcmd -ServerInstance $SqlServerFQDN -Database $SqlDatabaseName -Query $query -Username $UserName -Password $sqlPassword -OutputSqlErrors $True | Format-Table | Out-File $OutputFile -Force
     $stopwatch.Stop()
-    $stopWatch | Out-File $outputFile -Append
-    $errors = (Get-Content $outputFile | Select-String "Error:")
+    $stopWatch | Out-File $OutputFile -Append
+    $errors = (Get-Content $OutputFile | Select-String "Error:")
     if ($errors) {
         Write-Error $errors
     } else {
