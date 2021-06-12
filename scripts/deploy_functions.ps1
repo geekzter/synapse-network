@@ -41,8 +41,14 @@ try {
     foreach ($functionName in $functionNames) {
         Write-Host "`nFetching settings for function ${functionName}..."
         func azure functionapp fetch-app-settings $functionName --subscription $subscriptionID
-        Write-Host "`nPublishing to function ${functionName}..."
-        func azure functionapp publish $functionName -b local --subscription $subscriptionID
+
+        # Trying multiple times to cater for function warmup (SCM non-responsiveness)
+        $try = 0
+        do {
+            $try++
+            Write-Host "`nPublishing to function ${functionName} (#${try})..."
+            func azure functionapp publish $functionName -b local --subscription $subscriptionID
+        } while (($LASTEXITCODE -ne 0) -and ($try -lt 10))
     }
     Pop-Location
 } finally {
