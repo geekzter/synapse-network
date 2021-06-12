@@ -372,18 +372,29 @@ jobs:
     - script: npm i -g azure-functions-core-tools@3 --unsafe-perm true
       displayName: Install Azure Functions Core Tools
 
-    - pwsh: ./deploy_functions.ps1
-      displayName: 'Deploy Azure function(s)'
-      workingDirectory: '$(scriptDirectory)'
+    # - pwsh: ./deploy_functions.ps1
+    #   displayName: 'Deploy Azure function(s)'
+    #   workingDirectory: '$(scriptDirectory)'
 
-    - task: AzureFunctionApp@1
+    - task: AzureCLI@2
       displayName: 'Deploy Azure function(s)'
-      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
-        appType: functionAppLinux
-        appName: '$(TF_OUT_FUNCTION_NAME)'
-        package: $(System.ArtifactsDirectory)/**/*.zip
+        scriptType: pscore
+        scriptLocation: inlineScript
+        inlineScript: ./deploy_functions.ps1
+        useGlobalConfig: true
+        failOnStandardError: true
+        workingDirectory: '$(scriptDirectory)'
+
+    # - task: AzureFunctionApp@1
+    #   displayName: 'Deploy Azure function(s)'
+    #   enabled: false
+    #   inputs:
+    #     azureSubscription: '$(subscriptionConnection)'
+    #     appType: functionAppLinux
+    #     appName: '$(TF_OUT_FUNCTION_NAME)'
+    #     package: $(System.ArtifactsDirectory)/**/*.zip
 
     - ${{ if parameters.testReentrance }}:
       - task: TerraformCLI@0
