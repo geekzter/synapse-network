@@ -366,6 +366,8 @@ jobs:
 
     - task: NodeTool@0 
       displayName: Use Node.js
+      inputs:
+        versionSpec: '>=12.x'
 
     - script: npm i -g azure-functions-core-tools@3 --unsafe-perm true
       displayName: Install Azure Functions Core Tools
