@@ -364,8 +364,19 @@ jobs:
         workingDirectory: '$(functionsDirectory)'
         zipAfterPublish: True
 
+    - task: NodeTool@0 
+      displayName: Use Node.js
+
+    - script: npm i -g azure-functions-core-tools@3 --unsafe-perm true
+      displayName: Install Azure Functions Core Tools
+
+    - pwsh: ./deploy_functions.ps1
+      displayName: 'Deploy Azure function(s)'
+      workingDirectory: '$(scriptDirectory)'
+
     - task: AzureFunctionApp@1
       displayName: 'Deploy Azure function(s)'
+      enabled: false
       inputs:
         azureSubscription: '$(subscriptionConnection)'
         appType: functionAppLinux
