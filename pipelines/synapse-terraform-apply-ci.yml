@@ -383,6 +383,7 @@ jobs:
     - script: npm i -g azure-functions-core-tools@3 --unsafe-perm true
       displayName: Install Azure Functions Core Tools
 
+    # BUG: https://github.com/microsoft/azure-pipelines-tasks/issues/13033
     - task: AzureCLI@2
       displayName: 'Deploy Azure function(s)'
       inputs:
@@ -391,7 +392,7 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: ./deploy_functions.ps1
         useGlobalConfig: true
-        failOnStandardError: true
+        failOnStandardError: false
         workingDirectory: '$(scriptDirectory)'
 
     - ${{ if parameters.testReentrance }}:
