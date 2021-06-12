@@ -53,6 +53,14 @@ output connection_string_legacy {
 }
 
 output function_name {
+  value        = var.deploy_serverless && var.deploy_synapse ? module.serverless.0.function_name : null
+}
+
+output function_name_alternate_region {
+  value        = var.deploy_serverless && var.deploy_synapse && var.azure_alternate_region != null && var.azure_alternate_region != "" ? module.serverless_alternate_region.0.function_name : null
+}
+
+output function_names {
   value        = concat(
     var.deploy_serverless && var.deploy_synapse ? [module.serverless.0.function_name] : [],
     var.deploy_serverless && var.deploy_synapse && var.azure_alternate_region != null && var.azure_alternate_region != "" ? [module.serverless_alternate_region.0.function_name] : []
@@ -81,9 +89,11 @@ output managed_identity_client_id {
 output resource_group_id {
   value        = azurerm_resource_group.synapse.id
 }
-
 output resource_group_name {
   value        = azurerm_resource_group.synapse.name
+}
+output resource_suffix {
+  value                        = local.suffix
 }
 
 output sql_dwh_fqdn {

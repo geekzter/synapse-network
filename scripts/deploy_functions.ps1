@@ -21,6 +21,12 @@ try {
     Push-Location $tfdirectory
     AzLogin
     
+    $resourceGroupID = (GetTerraformOutput "resource_group_id")
+    if (!($resourceGroupID)) {
+        Write-Warning "Azure Resource Group not found, has infrastructure been provisioned?"
+        exit
+    }
+    $subscriptionID = $resourceGroupID.split("/")[2]
     $functionNames = (GetTerraformOutput -OutputVariable "function_name" -ComplexType)  
     if (!($functionNames)) {
         Write-Warning "Azure Function not found, has infrastructure been provisioned?"
@@ -34,9 +40,17 @@ try {
     [array]::Reverse($functionNames)
     foreach ($functionName in $functionNames) {
         Write-Host "`nFetching settings for function ${functionName}..."
-        func azure functionapp fetch-app-settings $functionName
-        Write-Host "`nPublishing to function ${functionName}..."
-        func azure functionapp publish $functionName -b local
+        func azure functionapp fetch-app-settings $functionName --subscription $subscriptionID
+
+        # Trying multiple times to cater for function warmup (SCM non-responsiveness)
+        $try = 0
+        do {
+            $try++
+            Write-Host "`nPublishing to function ${functionName} (#${try})..."
+            func azure functionapp publish $functionName -b local --subscription $subscriptionID #2>&1
+        } while (($LASTEXITCODE -ne 0) -and ($try -lt 25))
+        Write-Host "`nListing functions in ${functionName}..."
+        func azure functionapp list-functions $functionName
     }
     Pop-Location
 } finally {
