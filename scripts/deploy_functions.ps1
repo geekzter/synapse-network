@@ -47,8 +47,10 @@ try {
         do {
             $try++
             Write-Host "`nPublishing to function ${functionName} (#${try})..."
-            func azure functionapp publish $functionName -b local --subscription $subscriptionID
+            func azure functionapp publish $functionName -b local --subscription $subscriptionID 2>&1
         } while (($LASTEXITCODE -ne 0) -and ($try -lt 10))
+        Write-Host "`nListing functions in ${functionName}..."
+        func azure functionapp list-functions $functionName
     }
     Pop-Location
 } finally {

@@ -391,7 +391,7 @@ jobs:
         scriptLocation: inlineScript
         inlineScript: ./deploy_functions.ps1
         useGlobalConfig: true
-        failOnStandardError: false
+        failOnStandardError: true
         workingDirectory: '$(scriptDirectory)'
 
     - ${{ if parameters.testReentrance }}:
