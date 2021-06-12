@@ -75,7 +75,7 @@ variables:
 - name: 'repository'
   value: 'synapse-performance'
 - name: rowCount
-  value: 3
+  value: 10
 - name: 'TF_IN_AUTOMATION'
   value: 'true'
 - name: 'TF_INPUT'
