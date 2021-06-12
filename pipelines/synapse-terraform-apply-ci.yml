@@ -363,6 +363,8 @@ jobs:
         arguments: '--configuration $(BuildConfiguration) --output $(Build.ArtifactStagingDirectory)'
         workingDirectory: '$(functionsDirectory)'
         zipAfterPublish: True
+      env:
+        CLI_DEBUG: 1
 
     # - task: AzureFunctionApp@1
     #   displayName: 'Deploy Azure function(s)'
