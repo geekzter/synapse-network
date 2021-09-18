@@ -60,7 +60,7 @@ schedules:
   always: 'true'
   branches:
     include:
-    - master
+    - main
 
 variables:
 - group: 'synapse-ci'
