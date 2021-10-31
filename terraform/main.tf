@@ -20,6 +20,8 @@ locals {
       application              = "Synapse Performance"
       environment              = "dev"
       provisioner              = "terraform"
+      provisioner-client-id    = data.azurerm_client_config.current.client_id
+      provisioner-object-id    = data.azurerm_client_config.current.object_id
       repository               = "synapse-performance"
       runid                    = var.run_id
       shutdown                 = "true"
