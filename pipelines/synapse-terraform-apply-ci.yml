@@ -276,6 +276,7 @@ jobs:
         runAzLogin: true
         commandOptions: 'ci.tfplan'
         allowTelemetryCollection: true
+        retryCountOnTaskFailure: 3
 
     - task: TerraformCLI@0
       displayName: 'Terraform output'
@@ -308,6 +309,7 @@ jobs:
         useGlobalConfig: true
         workingDirectory: '$(scriptDirectory)'
         failOnStandardError: true
+        retryCountOnTaskFailure: 3
 
     - task: AzureCLI@2
       displayName: 'Retrieve top $(rowCount) rows'
@@ -417,6 +419,7 @@ jobs:
           runAzLogin: true
           commandOptions: 'ci-update.tfplan'
           allowTelemetryCollection: true
+          retryCountOnTaskFailure: 3
 
     - ${{ if not(eq(parameters.destroy, 'Never')) }}:
       - pwsh: |
@@ -441,6 +444,7 @@ jobs:
           environmentServiceName: '$(subscriptionConnection)'
           runAzLogin: true
           allowTelemetryCollection: true
+          retryCountOnTaskFailure: 3
 
 
 - ${{ if ne(parameters.destroy, 'Never') }}:
