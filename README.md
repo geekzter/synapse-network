@@ -1,9 +1,12 @@
+# Maintenance notice
+__Note__: I stopped maintaining this repository.
+For Synapse networking guidance, check Data Landing Zone on [GitHub](https://github.com/Azure/data-landing-zone) and [microsoft.com](https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/scenarios/cloud-scale-analytics/architectures/data-landing-zone).
+
+
 # Testing Synapse Analytics Network Performance
 
 This repo can be used to demonstrate performance of connectivity between various clients and Synapse in Azure. Queries are executed from these clients to simulate 'real world' performance experienced by users.
 Synapse Analytics (dedicated SQL pool formerly known as SQL Data Warehouse) is populated with the [New York Taxicab dataset](https://docs.microsoft.com/en-us/azure/synapse-analytics/sql-data-warehouse/load-data-from-azure-blob-storage-using-copy).
-
-[![Build status](https://dev.azure.com/ericvan/VDC/_apis/build/status/synapse-terraform-apply-ci?branchName=main)](https://dev.azure.com/ericvan/VDC/_build/latest?definitionId=82&branchName=main)
 
 <br/>
 
